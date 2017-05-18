@@ -85,6 +85,12 @@ static const struct sunxi_sc_nmi_reg_offs sun9i_reg_offs __initconst = {
 	.enable	= SUN9I_NMI_ENABLE,
 };
 
+static struct sunxi_sc_nmi_reg_offs sun50i_reg_offs = {
+       .ctrl   = 0x0c,
+       .pend   = 0x10,
+       .enable = 0x40,
+};
+
 static inline void sunxi_sc_nmi_write(struct irq_chip_generic *gc, u32 off,
 				      u32 val)
 {
@@ -260,3 +266,10 @@ static int __init sun9i_nmi_irq_init(struct device_node *node,
 	return sunxi_sc_nmi_irq_init(node, &sun9i_reg_offs);
 }
 IRQCHIP_DECLARE(sun9i_nmi, "allwinner,sun9i-a80-nmi", sun9i_nmi_irq_init);
+
+static int __init sun50i_nmi_irq_init(struct device_node *node,
+                                    struct device_node *parent)
+{
+       return sunxi_sc_nmi_irq_init(node, &sun50i_reg_offs);
+}
+IRQCHIP_DECLARE(sun50i_nmi, "allwinner,sun50i-a64-r-intc", sun50i_nmi_irq_init);
