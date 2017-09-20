@@ -162,8 +162,8 @@
 
 &reg_aldo3 {
 	regulator-always-on;
-	regulator-min-microvolt = <2700000>;
-	regulator-max-microvolt = <3300000>;
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
 	regulator-name = "vcc-pll-avcc";
 };
 
@@ -180,17 +180,22 @@
 
 &reg_dcdc2 {
 	regulator-always-on;
-	regulator-min-microvolt = <1000000>;
+	regulator-min-microvolt = <1040000>;
 	regulator-max-microvolt = <1300000>;
 	regulator-name = "vdd-cpux";
 };
 
 /* DCDC3 is polyphased with DCDC2 */
 
+/*
+ * The DRAM chips used by Pine64 boards are DDR3L-compatible, so they can
+ * work at 1.35V with less power consumption.
+ * As AXP803 DCDC5 cannot reach 1.35V accurately, use 1.36V instead.
+ */
 &reg_dcdc5 {
 	regulator-always-on;
-	regulator-min-microvolt = <1500000>;
-	regulator-max-microvolt = <1500000>;
+	regulator-min-microvolt = <1360000>;
+	regulator-max-microvolt = <1360000>;
 	regulator-name = "vcc-dram";
 };
 
@@ -243,6 +248,11 @@
 	regulator-name = "vcc-1v2-hsic";
 };
 
+/*
+ * The A64 chip cannot work without this regulator off, although
+ * it seems to be only driving the AR100 core.
+ * Maybe we don't still know well about CPUs domain.
+ */
 &reg_fldo2 {
 	regulator-always-on;
 	regulator-min-microvolt = <1100000>;

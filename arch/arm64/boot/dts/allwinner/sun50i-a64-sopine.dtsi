@@ -91,7 +91,7 @@
 
 &reg_dcdc2 {
 	regulator-always-on;
-	regulator-min-microvolt = <1000000>;
+	regulator-min-microvolt = <1040000>;
 	regulator-max-microvolt = <1300000>;
 	regulator-name = "vdd-cpux";
 };
@@ -117,6 +117,12 @@
 	regulator-min-microvolt = <1800000>;
 	regulator-max-microvolt = <1800000>;
 	regulator-name = "vdd-1v8-lpddr";
+};
+
+&reg_fldo1 {
+	regulator-min-microvolt = <1200000>;
+	regulator-max-microvolt = <1200000>;
+	regulator-name = "vcc-1v2-hsic";
 };
 
 /*
