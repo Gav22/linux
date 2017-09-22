@@ -71,7 +71,7 @@
 	pinctrl-0 = <&rgmii_pins>;
 	phy-mode = "rgmii";
 	phy-handle = <&ext_rgmii_phy>;
-}
+};
 &ehci1 {
 	status = "okay";
 };
