@@ -46,6 +46,9 @@
 /dts-v1/;
 
 #include "sun50i-a64-sopine.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pwm/pwm.h>
 
 / {
 	model = "SoPine on FSN Wanderer";
@@ -70,7 +73,6 @@
 	
 	leds {
 		compatible = "gpio-leds";
-
 		red {
 			label = "wanderer:red";
 			gpios = <&pio 7 2 GPIO_ACTIVE_HIGH>; /* PH2 */
@@ -94,13 +96,13 @@
 
 /* Hog required GPIOs, e.g. enable USB power */
 &pio {
-	usb_1 {
+	usb_1: usb_1 {
 		gpio-hog;
 		gpios = <7 6>; /* PH6 */
 		output-high;
 		line-name = "usb1-pwr-gpio";
 	};
-	usb_2 {
+	usb_2: usb_2 {
 		gpio-hog;
 		gpios = <7 7>; /* PH7 */
 		output-high;
@@ -135,11 +137,11 @@
 };
 
 &mdio {
+	status = "okay";
 	ext_rmii_phy: ethernet-phy@0 {
 		compatible = "ethernet-phy-ieee802.3-c22";
 		/*reg = <3>;*/ /* try auto probe */
 	};
-	status = "okay";
 };
 
 &mixer1 {
