@@ -213,6 +213,7 @@ int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
 
 	/* Register the MDIO bus */
 	rc = mdiobus_register(mdio);
+	dev_info(&mdio->dev, "mdiobus_register returned %d\n", rc);
 	if (rc)
 		return rc;
 
@@ -228,6 +229,7 @@ int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
 			rc = of_mdiobus_register_phy(mdio, child, addr);
 		else
 			rc = of_mdiobus_register_device(mdio, child, addr);
+		dev_info(&mdio->dev, "of_mdiobus_register_phy returned %d\n", rc);
 		if (rc)
 			goto unregister;
 	}
@@ -252,6 +254,7 @@ int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
 
 			if (of_mdiobus_child_is_phy(child)) {
 				rc = of_mdiobus_register_phy(mdio, child, addr);
+				dev_info(&mdio->dev, "of_mdiobus_register_phy(2) returned %d\n", rc);
 				if (rc)
 					goto unregister;
 			}
