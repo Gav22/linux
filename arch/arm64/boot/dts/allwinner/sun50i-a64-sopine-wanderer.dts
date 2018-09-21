@@ -92,23 +92,41 @@
 		};
 		
 	};
+	spi1: spi@01c69000 {
+		compatible = "allwinner,sun6i-a31-spi";
+		reg = <0x01c69000 0x1000>;
+		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_SPI1>;
+		resets = <&ccu RST_BUS_SPI1>;
+		/*clock-names = "ahb", "mod";
+		dmas = <&dma 24>, <&dma 24>;
+		dma-names = "rx", "tx";*/
+		status = "okay";
+	};
 };
 
-/* Hog required GPIOs, e.g. enable USB power */
 &pio {
-	usb_1: usb_1 {
-		gpio-hog;
-		gpios = <7 6 GPIO_ACTIVE_HIGH>; /* PH6 */
-		output-high;
-		line-name = "usb1-pwr-gpio";
+	pullup: pullup {
+		pins = "PC7", "PC4", "PB3";
+		bias-pull-up;
 	};
-	usb_2: usb_2 {
-		gpio-hog;
-		gpios = <7 7 GPIO_ACTIVE_HIGH>; /* PH7 */
-		output-high;
-		line-name = "usb2-pwr-gpio";
+	i2c0_pins: i2c0_pins {
+		pins = "PH0", "PH1";
+		function = "i2c0";
+		bias-pull-up;
+	};
+	spi1_pins: spi1_pins {
+		pins = "PD0", "PD1", "PD2", "PD3";
+		function = "spi1";
 	};
 };
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+};
+
 
 &de {
 	status = "okay";
@@ -153,11 +171,26 @@
 	pinctrl-0 = <&mmc2_pins>;
 	vmmc-supply = <&reg_vcc3v3>;
 	vqmmc-supply = <&reg_vcc1v8>;
-	bus-width = <8>;
+	bus-width = <4>;
 	non-removable;
 	cap-mmc-hw-reset;
 	status = "okay";
 };
+
+&mmc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc1_pins>;
+	vmmc-supply = <&reg_dldo4>;
+	vqmmc-supply = <&reg_eldo1>;
+	bus-width = <4>;
+	non-removable;
+	status = "okay";
+
+	wifi: wifi@1 {
+		reg = <1>;
+	};
+};
+
 
 &ohci0 {
 	status = "okay";
@@ -185,6 +218,7 @@
 };
 
 &reg_dldo4 {
+    regulator-always-on;
 	regulator-min-microvolt = <3300000>;
 	regulator-max-microvolt = <3300000>;
 	regulator-name = "vcc-wifi";
