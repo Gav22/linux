@@ -98,13 +98,13 @@
 &pio {
 	usb_1: usb_1 {
 		gpio-hog;
-		gpios = <7 6>; /* PH6 */
+		gpios = <7 6 GPIO_ACTIVE_HIGH>; /* PH6 */
 		output-high;
 		line-name = "usb1-pwr-gpio";
 	};
 	usb_2: usb_2 {
 		gpio-hog;
-		gpios = <7 7>; /* PH7 */
+		gpios = <7 7 GPIO_ACTIVE_HIGH>; /* PH7 */
 		output-high;
 		line-name = "usb2-pwr-gpio";
 	};
@@ -140,7 +140,7 @@
 	status = "okay";
 	ext_rmii_phy: ethernet-phy@0 {
 		compatible = "ethernet-phy-ieee802.3-c22";
-		/*reg = <3>;*/ /* try auto probe */
+		reg = <0>;
 	};
 };
 
