@@ -102,7 +102,7 @@ enum ks8995_chip_variant {
 	ks8995,
 	ksz8864,
 	ksz8795,
-	ksz8794
+	ksz8794,
 	max_variant
 };
 
