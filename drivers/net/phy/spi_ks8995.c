@@ -91,6 +91,7 @@
 #define KS8995_CHIP_ID		0x00
 #define KSZ8864_CHIP_ID		0x01
 #define KSZ8795_CHIP_ID		0x09
+#define KSZ8794_CHIP_ID		0x06
 
 #define KS8995_CMD_WRITE	0x02U
 #define KS8995_CMD_READ		0x03U
@@ -101,6 +102,7 @@ enum ks8995_chip_variant {
 	ks8995,
 	ksz8864,
 	ksz8795,
+	ksz8794
 	max_variant
 };
 
@@ -138,6 +140,14 @@ static const struct ks8995_chip_params ks8995_chip[] = {
 		.addr_width = 12,
 		.addr_shift = 1,
 	},
+	[ksz8794] = {
+		.name = "KSZ8794CLX",
+		.family_id = FAMILY_KSZ8795,
+		.chip_id = KSZ8795_CHIP_ID,
+		.regs_size = KSZ8795_REGS_SIZE,
+		.addr_width = 12,
+		.addr_shift = 1,
+	},
 };
 
 struct ks8995_pdata {
@@ -158,6 +168,7 @@ static const struct spi_device_id ks8995_id[] = {
 	{"ks8995", ks8995},
 	{"ksz8864", ksz8864},
 	{"ksz8795", ksz8795},
+	{"ksz8794", ksz8794},
 	{ }
 };
 MODULE_DEVICE_TABLE(spi, ks8995_id);
