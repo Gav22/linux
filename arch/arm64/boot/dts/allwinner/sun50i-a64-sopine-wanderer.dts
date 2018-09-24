@@ -112,6 +112,12 @@
 		/*dmas = <&dma 24>, <&dma 24>;
 		dma-names = "rx", "tx";*/
 		status = "okay";
+		ksz8794@0 {
+			compatible = "micrel,ks8794";
+			spi-max-frequency = <1000000>;
+			reg = <0>;
+		};
+		
 	};
 };
 
@@ -150,6 +156,11 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0_pins>;
 	status = "okay";
+	usb2514b@2c {
+		compatible = "microchip,usb2514b";
+		reg = <0x2c>;
+		reset-gpios = <&pio 7 10 GPIO_ACTIVE_LOW>;
+	};
 };
 
 
