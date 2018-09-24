@@ -90,21 +90,32 @@
 			gpios = <&pio 7 9 GPIO_ACTIVE_HIGH>; /* PH9 */
 			default-state = "on";
 		};
+		wifi_en {
+			label = "wifi:en";
+			gpios = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+		wifi_rst {
+			label = "wifi:rst";
+			gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
 		
 	};
 	spi1: spi@01c69000 {
 		compatible = "allwinner,sun6i-a31-spi";
 		reg = <0x01c69000 0x1000>;
 		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&ccu CLK_BUS_SPI1>;
+		clocks = <&ccu CLK_BUS_SPI1>, <&ccu CLK_SPI1>;
 		resets = <&ccu RST_BUS_SPI1>;
-		/*clock-names = "ahb", "mod";
-		dmas = <&dma 24>, <&dma 24>;
+		clock-names = "ahb", "mod";
+		/*dmas = <&dma 24>, <&dma 24>;
 		dma-names = "rx", "tx";*/
 		status = "okay";
 	};
 };
 
+/* Hog required GPIOs, e.g. enable USB power */
 &pio {
 	pullup: pullup {
 		pins = "PC7", "PC4", "PB3";
@@ -119,6 +130,20 @@
 		pins = "PD0", "PD1", "PD2", "PD3";
 		function = "spi1";
 	};
+};
+
+&r_pio {
+	/* Enable Wifi at boot */
+	r_pullup: r_pullup {
+		pins = "PL2", "PL3", "PL4", "PL5", "PL6";
+		bias-pull-up;
+	};
+	/*wifi_en: wifi_en {
+		gpio-hog;
+		gpios = <0 2 GPIO_ACTIVE_HIGH 0 4 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "wifi_en";
+	};*/
 };
 
 &i2c0 {
