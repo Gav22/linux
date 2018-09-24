@@ -105,6 +105,8 @@
 	spi1: spi@01c69000 {
 		compatible = "allwinner,sun6i-a31-spi";
 		reg = <0x01c69000 0x1000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi1_pins>;
 		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
 		clocks = <&ccu CLK_BUS_SPI1>, <&ccu CLK_SPI1>;
 		resets = <&ccu RST_BUS_SPI1>;
@@ -112,6 +114,8 @@
 		/*dmas = <&dma 24>, <&dma 24>;
 		dma-names = "rx", "tx";*/
 		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
 		ksz8794@0 {
 			compatible = "micrel,ksz8794";
 			spi-max-frequency = <1000000>;
