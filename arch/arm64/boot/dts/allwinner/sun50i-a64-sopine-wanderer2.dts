@@ -120,6 +120,7 @@
 			compatible = "micrel,ksz8794";
 			spi-max-frequency = <1000000>;
 			reg = <0>;
+			reset-gpios = <&pio 7 11 GPIO_ACTIVE_LOW>;			
 		};
 		
 	};
@@ -187,11 +188,16 @@
 
 &emac {
 	pinctrl-names = "default";
-	pinctrl-0 = <&rmii_pins>;
-	phy-mode = "rmii";
-	phy-handle = <&ext_rmii_phy>;
+	pinctrl-0 = <&rgmii_pins>;
+	phy-mode = "rgmii";
+	/*phy-handle = <&ext_rgmii_phy>;*/
 	phy-supply = <&reg_dc1sw>;
+	/*allwinner,tx-delay-ps = <700>;*/
 	status = "okay";
+	fixed-link {
+	      speed = <1000>;
+	      full-duplex;
+	};
 };
 
 &hdmi {
@@ -199,13 +205,13 @@
 	status = "okay";
 };
 
-&mdio {
+/*&mdio {
 	status = "okay";
-	ext_rmii_phy: ethernet-phy@0 {
+	ext_rgmii_phy: ethernet-phy@0 {
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <0>;
 	};
-};
+};*/
 
 &mixer1 {
 	status = "okay";
@@ -217,8 +223,8 @@
 	vmmc-supply = <&reg_vcc3v3>;
 	vqmmc-supply = <&reg_vcc1v8>;
 	bus-width = <4>;
-	non-removable;
 	cap-mmc-hw-reset;
+	cd-gpios = <&pio 2 7 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };
 

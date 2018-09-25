@@ -141,7 +141,7 @@ static const struct ks8995_chip_params ks8995_chip[] = {
 		.addr_shift = 1,
 	},
 	[ksz8794] = {
-		.name = "KSZ8794CLX",
+		.name = "KSZ8794CNX",
 		.family_id = FAMILY_KSZ8795,
 		.chip_id = KSZ8794_CHIP_ID,
 		.regs_size = KSZ8795_REGS_SIZE,
@@ -296,6 +296,9 @@ static int ks8995_reset(struct ks8995_switch *ks)
 		return err;
 
 	udelay(KS8995_RESET_DELAY);
+
+	// MW: temp, enable ingress clock delay
+	ks8995_write_reg(ks, 0x56, 0xff);
 
 	return ks8995_start(ks);
 }
