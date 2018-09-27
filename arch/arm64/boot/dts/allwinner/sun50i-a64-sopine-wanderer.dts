@@ -90,12 +90,17 @@
 			gpios = <&pio 7 9 GPIO_ACTIVE_HIGH>; /* PH9 */
 			default-state = "on";
 		};
+		wifi_wake {
+			label = "wifi:wake";
+			gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
 		/*wifi_en {
 			label = "wifi:en";
 			gpios = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
-		};*/
-		/*wifi_rst {
+		};
+		wifi_rst {
 			label = "wifi:rst";
 			gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
@@ -120,12 +125,13 @@
 			compatible = "micrel,ksz8794";
 			spi-max-frequency = <1000000>;
 			reg = <0>;
+			reset-gpios = <&pio 7 11 GPIO_ACTIVE_LOW>;			
 		};
 		
 	};
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
-		/*reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; */
+		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
 	};
 	
 };
@@ -148,17 +154,6 @@
 };
 
 &r_pio {
-	/* Enable Wifi at boot */
-	r_pullup: r_pullup {
-		pins = "PL2", "PL3", "PL4", "PL5", "PL6";
-		bias-pull-up;
-	};
-	/*wifi_en: wifi_en {
-		gpio-hog;
-		gpios = <0 2 GPIO_ACTIVE_HIGH 0 4 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "wifi_en";
-	};*/
 };
 
 &i2c0 {
@@ -215,31 +210,43 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc2_pins>;
 	vmmc-supply = <&reg_vcc3v3>;
-	vqmmc-supply = <&reg_vcc1v8>;
+	vqmmc-supply = <&reg_dcdc1>;
 	bus-width = <4>;
-	non-removable;
 	cap-mmc-hw-reset;
+	cd-gpios = <&pio 2 7 GPIO_ACTIVE_HIGH>;
 	status = "okay";
+};
+
+&reg_eldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vdd-1v8-wifi";
 };
 
 &mmc1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc1_pins>;
-	vmmc-supply = <&reg_dldo2>;
-	vqmmc-supply = <&reg_dldo4>;
+	vmmc-supply = <&reg_vcc3v3>;
+	vqmmc-supply = <&reg_eldo1>;
 	mmc-pwrseq = <&wifi_pwrseq>;
 	bus-width = <4>;
-	non-removable;
+	cap-mmc-hw-reset;
+	/*non-removable;*/
+	broken-cd;
+	/*cd-gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;*/
+	/*cd-inverted;*/
+	max-frequency = <20000000>;
 	status = "okay";
+	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
 	wilc_sdio: wilc_sdio@0 {
 	    compatible = "atmel,wilc_sdio";
 		reg = <0>;
 		gpio_reset = <&r_pio 0 4 GPIO_ACTIVE_LOW>;
 		gpio_chip_en = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
-	    gpio_irq = <&r_pio 0 3 IRQ_TYPE_LEVEL_LOW>;
+	    gpio_irq = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
 	};
 };
-
 
 &ohci0 {
 	status = "okay";

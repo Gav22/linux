@@ -93,7 +93,7 @@
 		wifi_wake {
 			label = "wifi:wake";
 			gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;
-			default-state = "off";
+			default-state = "on";
 		};
 		/*wifi_en {
 			label = "wifi:en";
@@ -131,7 +131,7 @@
 	};
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
-		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>, <&r_pio 0 2 GPIO_ACTIVE_LOW>; 
+		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
 	};
 	
 };
@@ -154,18 +154,6 @@
 };
 
 &r_pio {
-	/* Enable Wifi at boot */
-	sdio_pins: sdio-pins {
-		pins = "PL6", "PL4", "PL2", "PL3";
-		function = "wilc_sdio";
-		bias-pull-up;
-	};
-	/*wifi_en: wifi_en {
-		gpio-hog;
-		gpios = <0 2 GPIO_ACTIVE_HIGH 0 4 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "wifi_en";
-	};*/
 };
 
 &i2c0 {
@@ -249,15 +237,14 @@
 	mmc-pwrseq = <&wifi_pwrseq>;
 	bus-width = <4>;
 	cap-mmc-hw-reset;
-	non-removable;
+	/*non-removable;*/
+	broken-cd;
 	/*cd-gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;*/
 	/*cd-inverted;*/
 	max-frequency = <20000000>;
 	status = "okay";
 	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
 	wilc_sdio: wilc_sdio@0 {
-		pinctrl-names = "default";
-		pinctrl-0 = <&sdio_pins>;
 	    compatible = "atmel,wilc_sdio";
 		reg = <0>;
 		gpio_reset = <&r_pio 0 4 GPIO_ACTIVE_LOW>;
