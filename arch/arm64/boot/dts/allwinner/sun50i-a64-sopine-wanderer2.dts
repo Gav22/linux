@@ -241,7 +241,7 @@
 	broken-cd;
 	/*cd-gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;*/
 	/*cd-inverted;*/
-	max-frequency = <20000000>;
+	/*max-frequency = <20000000>;*/
 	status = "okay";
 	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
 	wilc_sdio: wilc_sdio@0 {
