@@ -46,6 +46,9 @@
 /dts-v1/;
 
 #include "sun50i-a64-sopine.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pwm/pwm.h>
 
 / {
 	model = "SoPine with baseboard";
@@ -66,6 +69,10 @@
 		regulator-name = "vcc1v8";
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
+	};
+	wifi_pwrseq: wifi_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
 	};
 };
 
@@ -117,6 +124,37 @@
 	status = "okay";
 };
 
+&reg_eldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vdd-1v8-wifi";
+};
+
+&mmc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc1_pins>;
+	vmmc-supply = <&reg_vcc3v3>;
+	vqmmc-supply = <&reg_eldo1>;
+	mmc-pwrseq = <&wifi_pwrseq>;
+	bus-width = <4>;
+	cap-mmc-hw-reset;
+	/*non-removable;*/
+	broken-cd;
+	/*cd-gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;*/
+	/*cd-inverted;*/
+	/*max-frequency = <20000000>;*/
+	status = "okay";
+	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
+	wilc_sdio: wilc_sdio@0 {
+	    compatible = "atmel,wilc_sdio";
+		reg = <0>;
+		gpio_reset = <&r_pio 0 4 GPIO_ACTIVE_LOW>;
+		gpio_chip_en = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
+	    gpio_irq = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
 &ohci0 {
 	status = "okay";
 };
@@ -126,6 +164,7 @@
 };
 
 &reg_dc1sw {
+    regulator-always-on;
 	regulator-name = "vcc-phy";
 };
 
