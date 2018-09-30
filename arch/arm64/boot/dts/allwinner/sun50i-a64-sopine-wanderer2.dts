@@ -224,8 +224,8 @@
 
 &reg_eldo3 {
 	regulator-always-on;
-	regulator-min-microvolt = <1800000>;
-	regulator-max-microvolt = <1800000>;
+	regulator-min-microvolt = <1900000>;
+	regulator-max-microvolt = <1900000>;
 	regulator-name = "vdd-1v8-wifi";
 };
 
@@ -233,7 +233,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&mmc1_pins>;
 	vmmc-supply = <&reg_vcc3v3>;
-	vqmmc-supply = <&reg_eldo1>;
+	/*vqmmc-supply = <&reg_eldo1>;*/
 	mmc-pwrseq = <&wifi_pwrseq>;
 	bus-width = <4>;
 	cap-mmc-hw-reset;
