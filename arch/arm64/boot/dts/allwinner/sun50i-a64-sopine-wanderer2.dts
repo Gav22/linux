@@ -129,6 +129,7 @@
 		};
 		
 	};
+	/* We sequence the wifi chip reset to enable probing */
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
@@ -164,6 +165,14 @@
 		compatible = "microchip,usb2514b";
 		reg = <0x2c>;
 		reset-gpios = <&pio 7 10 GPIO_ACTIVE_LOW>;
+	};
+	max6639@2e {
+		compatible = "maxim,max6639";
+		reg = <0x2e>;
+	};
+	eeprom@50 {
+		compatible = "atmel,24c02";
+		reg = <0x50>;
 	};
 };
 
@@ -224,8 +233,8 @@
 
 &reg_eldo3 {
 	regulator-always-on;
-	regulator-min-microvolt = <1900000>;
-	regulator-max-microvolt = <1900000>;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
 	regulator-name = "vdd-1v8-wifi";
 };
 
@@ -244,12 +253,17 @@
 	/*max-frequency = <20000000>;*/
 	status = "okay";
 	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
+    irq_gpios = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
 	wilc_sdio: wilc_sdio@0 {
 	    compatible = "atmel,wilc_sdio";
 		reg = <0>;
 		gpio_reset = <&r_pio 0 4 GPIO_ACTIVE_LOW>;
 		gpio_chip_en = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
 	    gpio_irq = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
+	    /* latest driver... */
+	    irq_gpios = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
+	    /* Old driver */
+	    /*gpios = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;*/
 	};
 };
 
