@@ -96,7 +96,7 @@ struct network_info {
 	void *join_params;
 	struct rssi_history_buffer rssi_history;
 	u64 tsf_hi;
-};
+} __attribute__ ((packed));
 
 struct connect_resp_info {
 	u16 capability;
@@ -104,7 +104,7 @@ struct connect_resp_info {
 	u16 assoc_id;
 	u8 *ies;
 	u16 ies_len;
-};
+} __attribute__ ((packed));
 
 struct connect_info {
 	u8 bssid[6];
@@ -113,13 +113,13 @@ struct connect_info {
 	u8 *resp_ies;
 	u16 resp_ies_len;
 	u16 status;
-};
+} __attribute__ ((packed));
 
 struct disconnect_info {
 	u16 reason;
 	u8 *ie;
 	size_t ie_len;
-};
+} __attribute__ ((packed));
 
 s32 wilc_parse_network_info(u8 *msg_buffer,
 			    struct network_info **ret_network_info);

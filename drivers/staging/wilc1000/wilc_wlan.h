@@ -263,12 +263,12 @@ struct wilc_cfg_frame {
 	u8 udp_header[8];
 	u8 wid_header[8];
 	u8 frame[MAX_CFG_FRAME_SIZE];
-};
+} __attribute__ ((packed));
 
 struct wilc_cfg_rsp {
 	int type;
 	u32 seq_no;
-};
+} __attribute__ ((packed));
 
 struct wilc;
 struct wilc_vif;

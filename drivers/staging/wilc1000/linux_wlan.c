@@ -772,6 +772,7 @@ int wilc1000_wlan_init(struct net_device *dev, struct wilc_vif *vif)
 
 		ret = linux_wlan_start_firmware(dev);
 		if (ret < 0) {
+			printk(KERN_INFO "wilc1000_wlan_init failed 1 %d\n", ret);
 			ret = -EIO;
 			goto _fail_irq_enable_;
 		}
@@ -785,6 +786,7 @@ int wilc1000_wlan_init(struct net_device *dev, struct wilc_vif *vif)
 						     sizeof(firmware_ver));
 			firmware_ver[size] = '\0';
 			netdev_dbg(dev, "Firmware Ver = %s\n", firmware_ver);
+			printk(KERN_INFO "Firmware Ver = %s\n", firmware_ver);
 		}
 		ret = linux_wlan_init_test_config(dev, vif);
 

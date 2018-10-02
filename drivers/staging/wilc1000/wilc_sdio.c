@@ -118,7 +118,8 @@ static int linux_sdio_probe(struct sdio_func *func,
 	if (IS_ENABLED(CONFIG_WILC1000_HW_OOB_INTR)) {
 		gpio = of_get_gpio(func->dev.of_node, 0);
 		if (gpio < 0)
-			gpio = GPIO_NUM;
+			gpio = 358;
+			//gpio = GPIO_NUM;
 	}
 
 	dev_dbg(&func->dev, "Initializing netdev\n");
@@ -403,7 +404,9 @@ static int sdio_write_reg(struct wilc *wilc, u32 addr, u32 data)
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = 4;
-		cmd.buffer = (u8 *)&data;
+		//cmd.buffer = (u8 *)&data;
+		*((u32*)&wilc->tmp_buf) = le32_to_cpu(data);
+		cmd.buffer = (u8 *) &wilc->tmp_buf;
 		cmd.block_size = g_sdio.block_size; /* johnny : prevent it from setting unexpected value */
 		ret = wilc_sdio_cmd53(wilc, &cmd);
 		if (ret) {
@@ -527,7 +530,7 @@ static int sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 				"Failed cmd 52, read reg (%08x) ...\n", addr);
 			goto _fail_;
 		}
-		*data = cmd.data;
+		*data = cpu_to_le32(cmd.data);
 	} else {
 		struct sdio_cmd53 cmd;
 
@@ -540,7 +543,8 @@ static int sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = 4;
-		cmd.buffer = (u8 *)data;
+		//cmd.buffer = (u8 *)data;
+		cmd.buffer = (u8 *) &wilc->tmp_buf;
 
 		cmd.block_size = g_sdio.block_size; /* johnny : prevent it from setting unexpected value */
 		ret = wilc_sdio_cmd53(wilc, &cmd);
@@ -549,9 +553,11 @@ static int sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 				"Failed cmd53, read reg (%08x)...\n", addr);
 			goto _fail_;
 		}
+		*data = cpu_to_le32(*(u32*)&wilc->tmp_buf);
 	}
 
-	*data = cpu_to_le32(*data);
+	//*data = cpu_to_le32(*data);
+	printk(KERN_INFO "read reg 0x%08X=0x%08X\n", addr, *data);
 
 	return 1;
 

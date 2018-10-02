@@ -163,6 +163,7 @@ struct wilc_vif {
 };
 
 struct wilc {
+	u64 tmp_buf;
 	const struct wilc_hif_func *hif_func;
 	int io_type;
 	int mac_status;
