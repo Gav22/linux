@@ -616,6 +616,15 @@
 			status = "disabled";
 		};
 
+		dma: dma-controller@01c02000 {
+			compatible = "allwinner,sun8i-a64-dma";
+			reg = <0x01c02000 0x1000>;
+			interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_DMA>;
+			resets = <&ccu RST_BUS_DMA>;
+			#dma-cells = <1>;
+		};
+		
 		dai: dai@1c22c00 {
 			#sound-dai-cells = <0>;
 			compatible = "allwinner,sun50i-a64-acodec-i2s";
@@ -625,8 +634,8 @@
 			clock-names = "apb", "mod";
 			resets = <&ccu RST_BUS_CODEC>;
 			reset-names = "rst";
-			/*dmas = <&dma 15>, <&dma 15>;
-			dma-names = "rx", "tx";*/
+			dmas = <&dma 15>, <&dma 15>;
+			dma-names = "rx", "tx";
 			status = "disabled";
 		};
 

@@ -1041,6 +1041,17 @@ static struct sun6i_dma_config sun8i_h3_dma_cfg = {
 };
 
 /*
+ * The A64 has 8 physical channels, a maximum DRQ port id of 27,
+ * and a total of 34 usable source and destination endpoints.
+ */
+
+static struct sun6i_dma_config sun8i_a64_dma_cfg = {
+	.nr_max_channels = 8,
+	.nr_max_requests = 27,
+	.nr_max_vchans   = 34,
+};
+
+/*
  * The V3s have only 8 physical channels, a maximum DRQ port id of 23,
  * and a total of 24 usable source and destination endpoints.
  */
@@ -1058,6 +1069,7 @@ static const struct of_device_id sun6i_dma_match[] = {
 	{ .compatible = "allwinner,sun8i-a83t-dma", .data = &sun8i_a83t_dma_cfg },
 	{ .compatible = "allwinner,sun8i-h3-dma", .data = &sun8i_h3_dma_cfg },
 	{ .compatible = "allwinner,sun8i-v3s-dma", .data = &sun8i_v3s_dma_cfg },
+	{ .compatible = "allwinner,sun8i-a64-dma", .data = &sun8i_a64_dma_cfg },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, sun6i_dma_match);
