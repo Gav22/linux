@@ -625,8 +625,8 @@
 			clock-names = "apb", "mod";
 			resets = <&ccu RST_BUS_CODEC>;
 			reset-names = "rst";
-			dmas = <&dma 15>, <&dma 15>;
-			dma-names = "rx", "tx";
+			/*dmas = <&dma 15>, <&dma 15>;
+			dma-names = "rx", "tx";*/
 			status = "disabled";
 		};
 
