@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+-include /usr/share/dpkg/pkg-info.mk
+
+build:
+	$(MAKE)
+
+binary-arch:
+	$(MAKE) KDEB_SOURCENAME=$(DEB_SOURCE) KDEB_PKGVERSION=$(DEB_VERSION) bindeb-pkg
+
+clean:
+	rm -rf debian/*tmp debian/files
+	mv debian/ debian.backup # debian/ might be cleaned away
+	$(MAKE) clean
+	mv debian.backup debian
+
+binary: binary-arch
+

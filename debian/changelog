@@ -1,0 +1,17 @@
+linux-4.14.14-1-wanderer (4.14.14-1.1) xenial; urgency=medium
+
+  * Wanderer device tree
+  * SPI device fixed
+  * Support KSZ8794 network switch
+  * Power sequencing for WiFi
+  * Merge A64 audio codec support
+  * Add DMA device support in dts
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Tue, 16 Oct 2018 15:35:44 +1300
+
+linux-4.14.14-1-wanderer (4.14.14-1.0) xenial; urgency=medium
+
+  * Initial release
+  * Forked from https://github.com/CallMeFoxie/linux/tree/e6b9ad549f6cf69ae9b2cb47a06c5f318a826eab
+  
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Fri, 14 Sep 2018 16:51:08 +1300
