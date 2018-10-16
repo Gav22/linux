@@ -1,18 +1,105 @@
 #!/usr/bin/make -f
+# Build and package the kernel
+# This is based on scripts/packaging/builddeb (loosely)
+
+# Some variables and settings used throughout
 
 -include /usr/share/dpkg/pkg-info.mk
 
+localversion=-1-wanderer
+version=$(patsubst linux-%,%,$(DEB_SOURCE))
+packageversion=$(DEB_VERSION)
+sourcename=$(DEB_SOURCE)
+tmpdir=debian/tmp
+kernel_headers_dir=debian/hdrtmp
+libc_headers_dir=debian/headertmp
+dbg_dir=debian/dbgtmp
+packagename=linux-image-$(version)
+kernel_headers_packagename=linux-headers-$(version)
+libc_headers_packagename=linux-libc-dev
+dbg_packagename=$packagename-dbg
+debarch=$(DEB_HOST_ARCH)
+forcearch=-DArchitecture=$(debarch)
+installed_image_path=boot/vmlinuz-$(version)
+
+OBJCOPY=$(DEB_HOST_GNU_TYPE)-objcopy
+
+info:
+	echo "khp=$(kernel_headers_packagename)"
+	echo "version=$(version)"
+
 build:
-	$(MAKE)
+	# Setup the directory structure
+	@rm -rf $(tmpdir) $(kernel_headers_dir) $(libc_headers_dir) $(dbg_dir) debian/files
+	@mkdir -m 755 -p $(tmpdir)/DEBIAN
+	@mkdir -p $(tmpdir)/lib $(tmpdir)/boot
+	@mkdir -p $(kernel_headers_dir)/lib/modules/$(version)/
 
-binary-arch:
-	$(MAKE) KDEB_SOURCENAME=$(DEB_SOURCE) KDEB_PKGVERSION=$(DEB_VERSION) bindeb-pkg
+install-modules:
+	ARCH=$(DEB_HOST_ARCH) INSTALL_MOD_PATH="$(tmpdir)" $(MAKE) KBUILD_SRC= LOCALVERSION=$(localversion) modules_install
+	@rm -f "$(tmpdir)/lib/modules/$(version)/build"
+	@rm -f "$(tmpdir)/lib/modules/$(version)/source"
+	@if [ -n "$(BUILD_DEBUG)" ] ; then \
+		for module in `find $(tmpdir)/lib/modules/ -name '*.ko' -printf '%P\n'`; do \
+			module=lib/modules/$$module; \
+			echo "doing $$module"; \
+			mkdir -p `dirname $(dbg_dir)/usr/lib/debug/$$module)`; \
+			$(OBJCOPY) --only-keep-debug $(tmpdir)/$$module $(dbg_dir)/usr/lib/debug/$$module; \
+			$(OBJCOPY) --strip-debug $(tmpdir)/$$module; \
+			$(OBJCOPY) --add-gnu-debuglink=$(dbg_dir)/usr/lib/debug/$$module $(tmpdir)/$$module; \
+		done; \
+		MODULE_SIG_ALL="$(grep -s '^CONFIG_MODULE_SIG_ALL=y' .config || true)" && \
+		if [ -n "$(MODULE_SIG_ALL)" ]; then \
+			ARCH=$(DEB_HOST_ARCH) INSTALL_MOD_PATH="$(tmpdir)" $(MAKE) KBUILD_SRC= LOCALVERSION=$(localversion) modules_sign; \
+		fi; \
+	fi
 
+install-headers:
+	# Build kernel header package
+	@find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl > debian/hdrsrcfiles
+	@find arch/*/include include scripts -type f >> debian/hdrsrcfiles
+	@find arch/$(DEB_HOST_ARCH) -name module.lds -o -name Kbuild.platforms -o -name Platform >> debian/hdrsrcfiles
+	@find `find arch/$(DEB_HOST_ARCH) -name include -o -name scripts -type d` -type f >> debian/hdrsrcfiles
+	@if grep -q '^CONFIG_STACK_VALIDATION=y' .config ; then \
+		find tools/objtool -type f -executable >> debian/hdrobjfiles; \
+	fi
+	@find arch/$(DEB_HOST_ARCH)/include Module.symvers include scripts -type f >> debian/hdrobjfiles
+	@if grep -q '^CONFIG_GCC_PLUGINS=y' .config ; then \
+		find scripts/gcc-plugins -name \*.so -o -name gcc-common.h >> debian/hdrobjfiles; \
+	fi
+	destdir=$(kernel_headers_dir)/usr/src/linux-headers-$(version) && \
+	mkdir -p $$destdir && \
+	tar -c -f - -T - < debian/hdrsrcfiles | tar -C $$destdir -x -f - && \
+	tar -c -f - -T - < debian/hdrobjfiles | tar -C $$destdir -x -f - && \
+	cp .config $$destdir/.config
+	@ln -sf /usr/src/linux-headers-$(version) $(kernel_headers_dir)/lib/modules/$(version)/build
+	@rm -f debian/hdrsrcfiles debian/hdrobjfiles
+
+install-arch: build-arch install-modules install-headers
+
+build-arch:
+	@cp debian/conf/kernel.config .config && \
+	export CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)- && \
+	ARCH=$(DEB_HOST_ARCH) $(MAKE) oldconfig && \
+	ARCH=$(DEB_HOST_ARCH) $(MAKE) -j4 KBUILD_SRC= KBUILD_IMAGE=arch/$(DEB_HOST_ARCH)/boot/Image LOCALVERSION=$(localversion)
+	@cp System.map "$(tmpdir)/boot/System.map-$(version)"
+	@cp .config "$(tmpdir)/boot/config-$(version)"
+	@cp arch/$(DEB_HOST_ARCH)/boot/Image $(tmpdir)/$(installed_image_path)
+	ARCH=$(DEB_HOST_ARCH) $(MAKE) KBUILD_SRC= INSTALL_DTBS_PATH="$(tmpdir)/usr/lib/$(packagename)" LOCALVERSION=$(localversion) dtbs_install
+	
 clean:
 	rm -rf debian/*tmp debian/files
 	mv debian/ debian.backup # debian/ might be cleaned away
 	$(MAKE) clean
 	mv debian.backup debian
+
+binary-arch: install-arch
+	dh_testdir -a
+	dh_fixperms -p$(packagename) -P$(tmpdir)
+	dh_installdeb -p$(packagename) -P$(tmpdir)
+	dh_gencontrol -p$(packagename) -P$(tmpdir) -- $(forcearch)
+	dh_md5sums -p$(packagename) -P$(tmpdir)
+	dh_builddeb -p$(packagename) -P$(tmpdir)
 
 binary: binary-arch
 
