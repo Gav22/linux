@@ -1,11 +1,12 @@
 #!/usr/bin/make -f
 # Build and package the kernel
 # This is based on scripts/packaging/builddeb (loosely)
-
-# Some variables and settings used throughout
+# Written by Michael Walton (mike@farsouthnet.com)
+#
 
 -include /usr/share/dpkg/pkg-info.mk
 
+# Some variables and settings used throughout
 localversion=-1-wanderer
 version=$(patsubst linux-%,%,$(DEB_SOURCE))
 packageversion=$(DEB_VERSION)
@@ -34,6 +35,11 @@ build:
 	@mkdir -m 755 -p $(tmpdir)/DEBIAN
 	@mkdir -p $(tmpdir)/lib $(tmpdir)/boot
 	@mkdir -p $(kernel_headers_dir)/lib/modules/$(version)/
+	@for script in postinst postrm preinst prerm ; do \
+		mkdir -p "$(tmpdir)/etc/kernel/$$script.d"; \
+		cat debian/conf/maint.in | MAINTSCRIPT=$$script KERNELVERSION=$(version) envsubst > $(tmpdir)/DEBIAN/$$script; \
+		chmod 755 $(tmpdir)/DEBIAN/$$script; \
+	done
 
 install-modules:
 	ARCH=$(DEB_HOST_ARCH) INSTALL_MOD_PATH="$(tmpdir)" $(MAKE) KBUILD_SRC= LOCALVERSION=$(localversion) modules_install
@@ -74,8 +80,8 @@ install-headers:
 	cp .config $$destdir/.config
 	@ln -sf /usr/src/linux-headers-$(version) $(kernel_headers_dir)/lib/modules/$(version)/build
 	@rm -f debian/hdrsrcfiles debian/hdrobjfiles
-
-install-arch: build-arch install-modules install-headers
+	ARCH=$(DEB_HOST_ARCH) $(MAKE) headers_check KBUILD_SRC=
+	ARCH=$(DEB_HOST_ARCH) $(MAKE) headers_install KBUILD_SRC= INSTALL_HDR_PATH="$(libc_headers_dir)/usr"
 
 build-arch:
 	@cp debian/conf/kernel.config .config && \
@@ -93,13 +99,37 @@ clean:
 	$(MAKE) clean
 	mv debian.backup debian
 
-binary-arch: install-arch
+install-arch: build-arch install-modules install-headers
 	dh_testdir -a
+	# linux-image-X
+	dh_installdocs -p$(packagename) -P$(tmpdir)
+	dh_installchangelogs -p$(packagename) -P$(tmpdir)
 	dh_fixperms -p$(packagename) -P$(tmpdir)
+	# linux-headers-X
+	dh_installdocs -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	dh_installchangelogs -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	dh_fixperms -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	# linux-libc-dev
+	dh_installdocs -p$(libc_headers_packagename) -P$(libc_headers_dir)
+	dh_installchangelogs -p$(libc_headers_packagename) -P$(libc_headers_dir)
+	dh_fixperms -p$(libc_headers_packagename) -P$(libc_headers_dir)
+
+binary-arch: install-arch
+	# linux-image-X
 	dh_installdeb -p$(packagename) -P$(tmpdir)
-	dh_gencontrol -p$(packagename) -P$(tmpdir) -- $(forcearch)
+	dh_gencontrol -p$(packagename) -P$(tmpdir) -- $(forcearch) -Vkernel:debarch="$(DEB_HOST_ARCH)"
 	dh_md5sums -p$(packagename) -P$(tmpdir)
 	dh_builddeb -p$(packagename) -P$(tmpdir)
+	# linux-headers-X
+	dh_installdeb -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	dh_gencontrol -p$(kernel_headers_packagename) -P$(kernel_headers_dir) -- $(forcearch) -Vkernel:debarch="$(DEB_HOST_ARCH)"
+	dh_md5sums -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	dh_builddeb -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
+	# linux-libc-dev
+	dh_installdeb -p$(libc_headers_packagename) -P$(libc_headers_dir)
+	dh_gencontrol -p$(libc_headers_packagename) -P$(libc_headers_dir) -- $(forcearch) -Vkernel:debarch="$(DEB_HOST_ARCH)"
+	dh_md5sums -p$(libc_headers_packagename) -P$(libc_headers_dir)
+	dh_builddeb -p$(libc_headers_packagename) -P$(libc_headers_dir)
 
 binary: binary-arch
 

@@ -1,15 +1,15 @@
 Source: linux-4.14.14-1-wanderer
 Section: kernel
 Priority: optional
-Maintainer: Anonymous <root@d3982429feb2>
-Build-Depends: bc, kmod, cpio 
+Maintainer: Michael Walton <mike@farsouthnet.com>
+Build-Depends: bc, kmod, cpio, debhelper
 Homepage: http://www.kernel.org/
 
 Package: linux-image-4.14.14-1-wanderer
 Architecture: any
-Description: Linux kernel, version ${binary:Version} on ${kernel:debarch}
+Description: Linux kernel, version ${binary:Version} on ${kernel:debarch} (FSN Wanderer 2)
  This package contains the Linux kernel, modules and corresponding other
- files, version: ${binary:Version}.
+ files, version: ${binary:Version}, for Far South Networks Wanderer 2
 
 Package: linux-headers-4.14.14-1-wanderer
 Architecture: any
