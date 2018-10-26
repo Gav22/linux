@@ -107,6 +107,53 @@
 		};*/
 		
 	};
+	spi0: spi@1c68000 {
+		compatible = "allwinner,sun6i-a31-spi";
+		reg = <0x01c68000 0x1000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi0_pins>;
+		interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_SPI0>, <&ccu CLK_SPI0>;
+		resets = <&ccu RST_BUS_SPI0>;
+		clock-names = "ahb", "mod";
+		/*dmas = <&dma 23>, <&dma 23>;
+		dma-names = "rx", "tx";*/
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		flash: w25q128@0 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "winbond,w25q128";
+			spi-max-frequency = <15625000>;
+			reg = <0>;
+
+			partition@00000 {
+				label = "U-boot";
+				reg = <0x00000 0xde000>;
+				read-only;
+			};
+	
+			partition@de000 {
+				label = "ROM";
+				reg = <0xde000 0x2000>;
+				read-only;
+			};
+	
+			partition@e0000 {
+				label = "U-boot-env";
+				reg = <0xe0000 0x20000>;
+				read-only;
+			};
+	
+			partition@100000 {
+				label = "Unused1";
+				reg = <0x100000 0x100000>;
+			};
+
+		};
+	};
+	
 	spi1: spi@01c69000 {
 		compatible = "allwinner,sun6i-a31-spi";
 		reg = <0x01c69000 0x1000>;
@@ -151,6 +198,10 @@
 	spi1_pins: spi1_pins {
 		pins = "PD0", "PD1", "PD2", "PD3";
 		function = "spi1";
+	};
+	spi0_pins: spi0 {
+		pins = "PC0", "PC1", "PC2", "PC3";
+		function = "spi0";
 	};
 };
 
