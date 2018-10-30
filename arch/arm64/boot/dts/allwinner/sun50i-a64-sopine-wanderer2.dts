@@ -124,8 +124,8 @@
 		flash: w25q128@0 {
 			#address-cells = <1>;
 			#size-cells = <1>;
-			compatible = "winbond,w25q128";
-			spi-max-frequency = <15625000>;
+			compatible = "winbond,w25q128", "jedec,spi-nor";
+			spi-max-frequency = <15000000>;
 			reg = <0>;
 
 			partition@00000 {
@@ -142,10 +142,14 @@
 	
 			partition@e0000 {
 				label = "U-boot-env";
-				reg = <0xe0000 0x20000>;
-				read-only;
+				reg = <0xe0000 0x10000>;
 			};
 	
+			partition@f0000 {
+				label = "env2";
+				reg = <0xe0000 0x10000>;
+			};
+
 			partition@100000 {
 				label = "Unused1";
 				reg = <0x100000 0x100000>;

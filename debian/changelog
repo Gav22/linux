@@ -1,6 +1,7 @@
 linux-4.14.14-1-wanderer (4.14.14-1.3) xenial; urgency=medium
 
   * Support for SOPINE w25q128 SPI flash as mtd
+  * And debug and fix for above
 
  -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Fri, 26 Oct 2018 17:56:02 +1300
 

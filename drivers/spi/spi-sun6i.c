@@ -24,7 +24,7 @@
 
 #include <linux/spi/spi.h>
 
-#define SUN6I_FIFO_DEPTH		128
+#define SUN6I_FIFO_DEPTH		64
 #define SUN8I_FIFO_DEPTH		64
 
 #define SUN6I_GBL_CTL_REG		0x04
@@ -352,6 +352,9 @@ static irqreturn_t sun6i_spi_handler(int irq, void *dev_id)
 {
 	struct sun6i_spi *sspi = dev_id;
 	u32 status = sun6i_spi_read(sspi, SUN6I_INT_STA_REG);
+/*	u32 fifo_status = sun6i_spi_read(sspi, SUN6I_FIFO_STA_REG);
+
+	dev_warn(&sspi->master->dev, "sun6i_spi_handler: status=0x%08X, fifo_stat=0x%08X len=%d", status, fifo_status, sspi->len);*/
 
 	/* Transfer complete */
 	if (status & SUN6I_INT_CTL_TC) {
