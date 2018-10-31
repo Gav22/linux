@@ -51,12 +51,28 @@
 #include <dt-bindings/pwm/pwm.h>
 
 / {
-	model = "SoPine on FSN Wanderer";
-	compatible = "pine64,sopine-baseboard", "pine64,sopine",
+	model = "SOPINE on FSN Wanderer";
+	compatible = "fsn,wanderer2", "pine64,sopine",
 		     "allwinner,sun50i-a64";
+
+	/* Holder for manufacturing info passed from boot */
+	mfginfo: mfginfo {
+		fsn_serial = "";
+		test_date = "";
+		board_name = "";
+	};
+
+	/* Just holders for additional MAC addresses passed from boot */
+	vmac1: vmac1 {
+	};
+	
+	vmac2: vmac2 {
+	};
 
 	aliases {
 		ethernet0 = &emac;
+		ethernet1 = &vmac1;
+		ethernet2 = &vmac2;
 		serial0 = &uart0;
 	};
 
@@ -186,6 +202,38 @@
 		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
 	};
 	
+	/* Single 100BASE-T via KSZ8081, disabled unless U-boot enables */
+	ethernet@1c30000r {
+		compatible = "allwinner,sun50i-a64-emac", "fsn,wand2-1-mac";
+		syscon = <&syscon>;
+		reg = <0x01c30000 0x10000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "macirq";
+		resets = <&ccu RST_BUS_EMAC>;
+		reset-names = "stmmaceth";
+		clocks = <&ccu CLK_BUS_EMAC>;
+		clock-names = "stmmaceth";
+		status = "disabled"; /* u-boot will enable if detected */
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rmii_pins>;
+		phy-mode = "rmii";
+		phy-handle = <&ext_rmii_phy>;
+		phy-supply = <&reg_dc1sw>;
+
+		mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+			ext_rmii_phy: ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				reg = <0>;
+			};
+		};
+	};
+	
+	
 };
 
 /* Hog required GPIOs, e.g. enable USB power */
@@ -256,14 +304,13 @@
 	status = "okay";
 };
 
+/* Default ethernet via KSZ8794 switch */
 &emac {
+	compatible = "allwinner,sun50i-a64-emac", "fsn,wand2-3-mac";
 	pinctrl-names = "default";
 	pinctrl-0 = <&rgmii_pins>;
 	phy-mode = "rgmii";
-	/*phy-handle = <&ext_rgmii_phy>;*/
-	phy-supply = <&reg_dc1sw>;
-	/*allwinner,tx-delay-ps = <700>;*/
-	status = "okay";
+	status = "disabled"; /* u-boot will enable if detected */
 	fixed-link {
 	      speed = <1000>;
 	      full-duplex;
@@ -274,14 +321,6 @@
 	hvcc-supply = <&reg_dldo1>;
 	status = "okay";
 };
-
-/*&mdio {
-	status = "okay";
-	ext_rgmii_phy: ethernet-phy@0 {
-		compatible = "ethernet-phy-ieee802.3-c22";
-		reg = <0>;
-	};
-};*/
 
 &mixer1 {
 	status = "okay";
