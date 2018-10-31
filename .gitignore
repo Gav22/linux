@@ -56,7 +56,11 @@ Module.symvers
 #
 # Debian directory (make deb-pkg)
 #
-/debian/
+/debian/tmp/
+/debian/hdrtmp/
+/debian/headertmp/
+/debian/*.log
+/debian/*.substvars
 
 #
 # tar directory (make tar*-pkg)

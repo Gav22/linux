@@ -4,6 +4,7 @@ linux-4.14.14-1-wanderer (4.14.14-1.4) xenial; urgency=medium
   * Update wanderer2 dts to support u-boot selection of ethernet
     switch KSZ8794 or PHY KSZ8081
   * Support manufacturing info in device tree (populated by u-boot)
+  * Add hook and script for auto update of extlinux.conf
 
  -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Thu, 01 Nov 2018 08:09:33 +1300
 

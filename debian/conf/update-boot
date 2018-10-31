@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Update u-boot configuration on kernel add/remove
+#
+
+XVERSION=$1
+
+mkdir -p /boot/extlinux
+
+[ -f /boot/extlinux/extlinux.conf ] && echo "Backing up old extlinux.conf" && mv /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old 
+
+for image in `ls -t /boot/vmlinuz-* | grep -v dpkg`; do
+  version=`echo $image | sed 's/\/boot\/vmlinuz-//'`
+  fdt=''
+  initrd=''
+
+  echo "Found kernel ${version}"
+
+  echo "Adding linux-image-${version} to the list..."
+  
+  if [ -f /boot/initrd.img-$version ]; then
+    initrd="INITRD /initrd.img-$version"
+    echo "> found initrd"
+  else 
+    echo "Missing initrd for image ${version}! Cannot continue ..."
+    exit 1
+  fi
+  
+  if [ -f /boot/dtb-${version} ]; then
+    echo "> found dtb"
+  else 
+    echo "Missing dtb for image ${version}! Cannot continue ..."
+    exit 1
+  fi
+
+  fdt="FDT /dtb-${version}"
+  
+  echo "Running depmod..."
+  depmod ${version}
+
+  
+  # Find root mount point, this works also in chroot if /proc is bind mounted
+  root="UUID=`findmnt -n -o UUID --target /`"
+  echo "> got root=${root}"
+
+  cat >> /boot/extlinux/extlinux.conf << EOF
+LABEL linux-image-$version
+  KERNEL /vmlinuz-$version
+  ${initrd}
+  ${fdt}
+  APPEND root=${root} console=ttyS0,115200 rootwait rw
+EOF
+done
+
+DEFAULT=""
+
+if [ x"${XVERSION}" != "x" ]; then
+  DEFAULT=${XVERSION}
+  if [ ! -f "/boot/vmlinuz-${XVERSION}" ]; then
+    echo "Requested kernel ${XVERSION} does not exist!"
+    DEFAULT=""
+  fi
+fi
+
+if [ x"${DEFAULT}" = "x" ]; then
+  echo "Using default latest kernel"
+  DEFAULT=`ls -t /boot/vmlinuz-* | grep -v dpkg | head -n 1 | sed 's/\/boot\/vmlinuz-//'`
+fi
+
+if [ x"${DEFAULT}" != "x" ]; then
+  echo "Setting linux-image-${DEFAULT}" as the default option
+  cat > /tmp/extlinux.$$ << EOF
+DEFAULT linux-image-${DEFAULT}
+EOF
+  mv /boot/extlinux/extlinux.conf /tmp/extlinux-imgs.$$
+  cat /tmp/extlinux.$$ /tmp/extlinux-imgs.$$ > /boot/extlinux/extlinux.conf
+  rm /tmp/extlinux.$$ /tmp/extlinux-imgs.$$
+fi

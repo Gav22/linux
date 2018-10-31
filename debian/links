@@ -1,0 +1,2 @@
+/usr/bin/update-boot /etc/kernel/postinst.d/update-boot
+/usr/bin/update-boot /etc/kernel/postrm.d/update-boot
