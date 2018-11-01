@@ -93,7 +93,7 @@ build-arch:
 	@cp .config "$(tmpdir)/boot/config-$(version)"
 	@cp arch/$(DEB_HOST_ARCH)/boot/Image $(tmpdir)/$(installed_image_path)
 	ARCH=$(DEB_HOST_ARCH) $(MAKE) KBUILD_SRC= INSTALL_DTBS_PATH="$(tmpdir)/usr/lib/$(packagename)" LOCALVERSION=$(localversion) dtbs_install
-	@cp arch/$(DEB_HOST_ARCH)/boot/dts/$(dtb) $(tmpdir)/dtb-$(version)
+	@cp arch/$(DEB_HOST_ARCH)/boot/dts/$(dtb) $(tmpdir)/boot/dtb-$(version)
 	
 clean:
 	rm -rf debian/*tmp debian/files
@@ -104,14 +104,20 @@ clean:
 install-arch: build-arch install-modules install-headers
 	dh_testdir -a
 	# linux-image-X
+	dh_install -p$(packagename) -P$(tmpdir)
+	dh_link -p$(packagename) -P$(tmpdir)
 	dh_installdocs -p$(packagename) -P$(tmpdir)
 	dh_installchangelogs -p$(packagename) -P$(tmpdir)
 	dh_fixperms -p$(packagename) -P$(tmpdir)
 	# linux-headers-X
+	dh_install -p$(packagename) -P$(tmpdir)
+	dh_link -p$(packagename) -P$(tmpdir)
 	dh_installdocs -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
 	dh_installchangelogs -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
 	dh_fixperms -p$(kernel_headers_packagename) -P$(kernel_headers_dir)
 	# linux-libc-dev
+	dh_install -p$(packagename) -P$(tmpdir)
+	dh_link -p$(packagename) -P$(tmpdir)
 	dh_installdocs -p$(libc_headers_packagename) -P$(libc_headers_dir)
 	dh_installchangelogs -p$(libc_headers_packagename) -P$(libc_headers_dir)
 	dh_fixperms -p$(libc_headers_packagename) -P$(libc_headers_dir)
