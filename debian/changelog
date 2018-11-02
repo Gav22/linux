@@ -1,6 +1,5 @@
 linux-4.14.14-1-wanderer (4.14.14-1.5) xenial; urgency=medium
 
-  * Add initramfs hook for update-boot
   * Fix update-boot for /boot relative to / mount point
   * Fix polarity of mmc2 card detect in wanderer device tree
   * Bump
