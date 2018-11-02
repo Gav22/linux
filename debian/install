@@ -1,1 +1,2 @@
 debian/conf/update-boot usr/bin/
+debian/conf/initramfs-update-boot etc/initramfs-tools/hooks/

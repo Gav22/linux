@@ -1,3 +1,11 @@
+linux-4.14.14-1-wanderer (4.14.14-1.5) xenial; urgency=medium
+
+  * Add initramfs hook for update-boot
+  * Fix update-boot for /boot relative to / mount point
+  * Fix polarity of mmc2 card detect in wanderer device tree
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Fri, 02 Nov 2018 13:58:51 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.4) xenial; urgency=medium
 
   * Add cpufreq compatibility line for A64

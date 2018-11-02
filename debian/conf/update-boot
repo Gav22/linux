@@ -13,13 +13,15 @@ for image in `ls -t /boot/vmlinuz-* | grep -v dpkg`; do
   version=`echo $image | sed 's/\/boot\/vmlinuz-//'`
   fdt=''
   initrd=''
+  # TODO: check mount point of boot
+  boot=/boot
 
   echo "Found kernel ${version}"
 
   echo "Adding linux-image-${version} to the list..."
   
   if [ -f /boot/initrd.img-$version ]; then
-    initrd="INITRD /initrd.img-$version"
+    initrd="INITRD ${boot}/initrd.img-$version"
     echo "> found initrd"
   else 
     echo "Missing initrd for image ${version}! Cannot continue ..."
@@ -33,7 +35,7 @@ for image in `ls -t /boot/vmlinuz-* | grep -v dpkg`; do
     exit 1
   fi
 
-  fdt="FDT /dtb-${version}"
+  fdt="FDT ${boot}/dtb-${version}"
   
   echo "Running depmod..."
   depmod ${version}
@@ -45,7 +47,7 @@ for image in `ls -t /boot/vmlinuz-* | grep -v dpkg`; do
 
   cat >> /boot/extlinux/extlinux.conf << EOF
 LABEL linux-image-$version
-  KERNEL /vmlinuz-$version
+  KERNEL ${boot}/vmlinuz-$version
   ${initrd}
   ${fdt}
   APPEND root=${root} console=ttyS0,115200 rootwait rw

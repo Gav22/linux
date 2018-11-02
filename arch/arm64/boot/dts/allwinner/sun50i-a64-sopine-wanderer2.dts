@@ -333,7 +333,7 @@
 	vqmmc-supply = <&reg_dcdc1>;
 	bus-width = <4>;
 	cap-mmc-hw-reset;
-	cd-gpios = <&pio 2 7 GPIO_ACTIVE_HIGH>;
+	cd-gpios = <&pio 2 7 GPIO_ACTIVE_LOW>;
 	status = "okay";
 };
 
