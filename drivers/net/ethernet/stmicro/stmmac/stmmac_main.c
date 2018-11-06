@@ -4091,10 +4091,19 @@ int stmmac_dvr_probe(struct device *device,
 	struct stmmac_priv *priv;
 	int ret = 0;
 	u32 queue;
+	const char *name = "eth%d";
 
-	ndev = alloc_etherdev_mqs(sizeof(struct stmmac_priv),
+	if (plat_dat->phy_node && of_phy_is_fixed_link(plat_dat->phy_node)) {
+		/* Use swXXX naming for fixed link, we assume it is to a switch */
+		name = "sw%d";
+	}
+	ndev = alloc_netdev_mqs(sizeof(struct stmmac_priv), name,
+				     NET_NAME_UNKNOWN, ether_setup,
+					 MTL_MAX_TX_QUEUES,
+					 MTL_MAX_RX_QUEUES);
+	/*ndev = alloc_etherdev_mqs(sizeof(struct stmmac_priv),
 				  MTL_MAX_TX_QUEUES,
-				  MTL_MAX_RX_QUEUES);
+				  MTL_MAX_RX_QUEUES);*/
 	if (!ndev)
 		return -ENOMEM;
 

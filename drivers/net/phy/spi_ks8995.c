@@ -3,6 +3,9 @@
  *
  * Copyright (C) 2008 Gabor Juhos <juhosg at openwrt.org>
  *
+ * Plumbing into DSA for KSZ8794 is
+ *     Copyright (c) 2018 Michael Walton <mike@farsouthnet.com>
+ *
  * This file was based on: drivers/spi/at25.c
  *     Copyright (C) 2006 David Brownell
  *
@@ -21,11 +24,14 @@
 #include <linux/gpio/consumer.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
+#include <linux/mii.h>
 
 #include <linux/spi/spi.h>
+#include <linux/netdevice.h>
+#include <net/dsa.h>
 
-#define DRV_VERSION		"0.1.1"
-#define DRV_DESC		"Micrel KS8995 Ethernet switch SPI driver"
+#define DRV_VERSION		"0.1.3"
+#define DRV_DESC		"Micrel KS8995/KSZ8794 Ethernet switch SPI driver"
 
 /* ------------------------------------------------------------------------ */
 
@@ -42,8 +48,9 @@
 #define KS8995_REG_GC7		0x09    /* Global Control 7 */
 #define KS8995_REG_GC8		0x0a    /* Global Control 8 */
 #define KS8995_REG_GC9		0x0b    /* Global Control 9 */
+#define KS8995_REG_GC10		0x0c    /* Global Control 10 */
 
-#define KS8995_REG_PC(p, r)	((0x10 * p) + r)	 /* Port Control */
+#define KS8995_REG_PC(p, r)	((0x10 * p) + r)	 /* Port Control p = 0,1,2,... */
 #define KS8995_REG_PS(p, r)	((0x10 * p) + r + 0xe)  /* Port Status */
 
 #define KS8995_REG_TPC0		0x60    /* TOS Priority Control 0 */
@@ -156,6 +163,8 @@ struct ks8995_pdata {
 };
 
 struct ks8995_switch {
+	struct dsa_switch 	*ds;
+	int 				cpu_port;			/* port connected to CPU */
 	struct spi_device	*spi;
 	struct mutex		lock;
 	struct ks8995_pdata	*pdata;
@@ -428,6 +437,230 @@ static void ks8995_parse_dt(struct ks8995_switch *ks)
 		&pdata->reset_gpio_flags);
 }
 
+/*static void ksz_port_cfg(struct ks8995_switch *ks, int port, int offset, u8 bits,
+			 bool set)
+{
+	int addr;
+	u8 data;
+
+	addr = KS8995_REG_PC(port, offset);
+	ks8995_read_reg(ks, addr, &data);
+
+	if (set)
+		data |= bits;
+	else
+		data &= ~bits;
+
+	ks8995_write_reg(ks, addr, data);
+}*/
+
+#define CPU_PORT_OFS 4
+
+static void port_setup(struct ks8995_switch *ks, int port)
+{
+	/* enable tag tail for host port */
+	if (port == ks->cpu_port) {
+		ks8995_write_reg(ks, 0x02, 0x4c); // soft power down
+		usleep_range(10, 20);
+		ks8995_write_reg(ks, 0x02, 0x0c);
+	    //ksz8895_write(dev, 0x0e, 0x00);
+		ks8995_write_reg(ks, KS8995_REG_GC10, 0x46); // Tail tagging enable
+		ks8995_write_reg(ks, KS8995_REG_PC(CPU_PORT_OFS, 0x12), 0x07); // learning disable, tx/rx enable
+		ks8995_write_reg(ks, KS8995_REG_PC(CPU_PORT_OFS, 0xb1), 0x02); // 4 egress queues for switch MII
+	} else {
+		ks8995_write_reg(ks, KS8995_REG_PC(port, 0x12), 0x03); // learning disable, rx enable
+	}
+	/* set flow control */
+	/*ksz_port_cfg(dev, port, REG_PORT_CTRL_0,
+		     PORT_FORCE_TX_FLOW_CTRL | PORT_FORCE_RX_FLOW_CTRL, true);*/
+
+	/* disable DiffServ priority */
+	//ksz_port_cfg(dev, port, P_PRIO_CTRL, PORT_DIFFSERV_PRIO_ENABLE, false);
+
+	/* replace priority */
+	/*ksz_port_cfg(dev, port, REG_PORT_MRI_MAC_CTRL, PORT_USER_PRIO_CEILING,
+		     false);
+	ksz_port_cfg32(dev, port, REG_PORT_MTI_QUEUE_CTRL_0__4,
+		       MTI_PVID_REPLACE, false);*/
+
+	/* enable 802.1p priority */
+	//ksz_port_cfg(dev, port, P_PRIO_CTRL, PORT_802_1P_PRIO_ENABLE, true);
+
+
+	/* clear pending interrupts */
+	//ksz_pread16(dev, port, REG_PORT_PHY_INT_ENABLE, &data16);
+}
+
+static enum dsa_tag_protocol ks8995_get_tag_protocol(struct dsa_switch *ds)
+{
+	return DSA_TAG_PROTO_KSZ879X;
+}
+
+static int ks8995_setup(struct dsa_switch *ds)
+{
+	struct ks8995_switch *ks = ds->priv;
+	int i;
+
+	ds->num_ports = 4;
+
+	for (i = 0; i < ds->num_ports; i++) {
+		if (dsa_is_cpu_port(ds, i)) {
+			struct dsa_port *port = &ds->ports[i];
+			ks->cpu_port = i;
+			/* enable cpu port */
+			port_setup(ks, i);
+
+			if (!netif_running(port->netdev)) {
+				dev_open(port->netdev);
+			}
+
+			// Rename our cpu port's device
+			/*dev_get_valid_name(dev_net(port->netdev), port->netdev, "sw%d");
+			dev_change_name(port->netdev, "sw%d");*/
+			break;
+		}
+	}
+
+	// TODO: restart switch?
+	return 0;
+}
+
+static int ks8995_phy_read16(struct dsa_switch *ds, int p, int reg)
+{
+	struct ks8995_switch *ks = ds->priv;
+	u8 s0, s1, s2;
+	int r = 0;
+
+	/* phyaddr is 0 - 2 for KSZ8794 */
+	/* Simulate MIIM of this device */
+	if (reg == MII_PHYSID1) return 0x0022;
+	if (reg == MII_PHYSID2) return 0x1550;
+	if (reg == MII_BMCR) {
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1c), &s0); // CONTROL 9
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1d), &s1); // CONTROL 10
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1f), &s2); // CONTROL 11
+		if (!(s0 & 0x80)) r |= BMCR_ANENABLE;
+		if (s0 & 0x40) r |= BMCR_SPEED100;
+		if (s0 & 0x20) r |= BMCR_FULLDPLX;
+		if (s1 & 0x80) r |= 0x0001; // led off
+		if (s1 & 0x40) r |= 0x0002; // disable tx
+		if (s1 & 0x20) r |= BMCR_ANRESTART;
+		if (s1 & 0x08) r |= BMCR_PDOWN;
+		if (s1 & 0x04) r |= 0x0008; // disable MDI/MDIX
+		if (s1 & 0x02) r |= 0x0010; // force MDI
+		if (s1 & 0x01) r |= BMCR_LOOPBACK;
+		if (s2 & 0x20) r |= BMCR_ISOLATE;
+		if (s2 & 0x10) r |= BMCR_RESET;
+	} else if (reg == MII_BMSR) {
+		r = BMSR_100FULL | BMSR_100HALF | BMSR_10FULL | BMSR_10HALF | BMSR_ANEGCAPABLE;
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1e), &s0); // STATUS 2
+		if (s0 & 0x40) r |= BMSR_ANEGCOMPLETE;
+		if (s0 & 0x20) r |= BMSR_LSTATUS;
+	} else if (reg == MII_ADVERTISE) {
+		/* Just hard code it */
+		r = ADVERTISE_PAUSE_CAP | ADVERTISE_100FULL | ADVERTISE_10FULL | ADVERTISE_100HALF | ADVERTISE_10HALF | ADVERTISE_CSMA;
+	} else if (reg == MII_LPA) {
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x18), &s0); // STATUS 0
+		if (s0 & 0x01) r |= LPA_10HALF;
+		if (s0 & 0x02) r |= LPA_10FULL;
+		if (s0 & 0x04) r |= LPA_100HALF;
+		if (s0 & 0x08) r |= LPA_100FULL;
+		if (s0 & 0x20) r |= LPA_PAUSE_ASYM;
+	} else if (reg == 0x1f) { /* PHY special control/status */
+		/* TODO? */
+	} else {
+		return 0xffff;
+	}
+
+	return r;
+}
+
+static int ks8995_phy_write16(struct dsa_switch *ds, int p, int reg, u16 val)
+{
+	struct ks8995_switch *ks = ds->priv;
+	u8 s0, s1, s2;
+
+	/* phyaddr is 0 - 2 for KSZ8794 */
+	/* Simulate MIIM of this device */
+	if (reg == MII_BMCR) {
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1c), &s0); // CONTROL 9
+		ks8995_read_reg(ks, KS8995_REG_PC(p, 0x1f), &s2); // CONTROL 11
+		s0 &= ~(0x80|0x40|0x20);
+		s1 = 0;
+		s2 &= ~(0x20|0x10);
+		if (!(val & BMCR_ANENABLE)) s0 |= 0x80; // this bit is opposite in polarity
+		if (val & BMCR_SPEED100) s0 |= 0x40;
+		if (val & BMCR_FULLDPLX) s0 |= 0x20;
+		if (val & 0x0001) s1 |= 0x80;
+		if (val & 0x0002) s1 |= 0x40;
+		if (val & BMCR_ANRESTART) s1 |= 0x20;
+		if (val & BMCR_PDOWN) s1 |= 0x08;
+		if (val & 0x0008) s1 |= 0x04;
+		if (val & 0x0010) s1 |= 0x02;
+		if (val & BMCR_LOOPBACK) s1 |= 0x01;
+		if (val & BMCR_ISOLATE) s2 |= 0x20;
+		if (val & BMCR_RESET) s2 |= 0x10;
+
+		/* reset (if enabled) first */
+		ks8995_write_reg(ks, KS8995_REG_PC(p, 0x1f), s2);
+		// Hang on?
+		usleep_range(10, 20);
+		//udelay(KSZ8794_RESET_DELAY);
+		ks8995_write_reg(ks, KS8995_REG_PC(p, 0x1c), s0);
+		ks8995_write_reg(ks, KS8995_REG_PC(p, 0x1d), s1); // CONTROL 10
+	}
+	return 0;
+}
+
+static int ks8995_enable_port(struct dsa_switch *ds, int port,
+			   struct phy_device *phy)
+{
+	struct ks8995_switch *ks = ds->priv;
+
+	/* setup slave port */
+	port_setup(ks, port);
+
+	return 0;
+}
+
+static void ks8995_disable_port(struct dsa_switch *ds, int port,
+			     struct phy_device *phy)
+{
+	struct ks8995_switch *ks = ds->priv;
+
+    ks8995_write_reg(ks, KS8995_REG_PC(port, 0x12), 0x01); // rx disabled
+}
+
+
+
+static const struct dsa_switch_ops ks8995_switch_ops = {
+	.get_tag_protocol	= ks8995_get_tag_protocol,
+	.setup			= ks8995_setup,
+	.phy_read		= ks8995_phy_read16,
+	.phy_write		= ks8995_phy_write16,
+	.port_enable		= ks8995_enable_port,
+	.port_disable		= ks8995_disable_port,
+	//.get_strings		= ksz_get_strings,
+	//.get_ethtool_stats	= ksz_get_ethtool_stats,
+	//.get_sset_count		= ksz_sset_count,
+	//.port_stp_state_set	= ksz_port_stp_state_set,
+	//.port_fast_age		= ksz_port_fast_age,
+	//.port_vlan_filtering	= ksz_port_vlan_filtering,
+	//.port_vlan_prepare	= ksz_port_vlan_prepare,
+	//.port_vlan_add		= ksz_port_vlan_add,
+	//.port_vlan_del		= ksz_port_vlan_del,
+	//.port_fdb_dump		= ksz_port_fdb_dump,
+	//.port_fdb_add		= ksz_port_fdb_add,
+	//.port_fdb_del		= ksz_port_fdb_del,
+	//.port_mdb_prepare       = ksz_port_mdb_prepare,
+	//.port_mdb_add           = ksz_port_mdb_add,
+	//.port_mdb_del           = ksz_port_mdb_del,
+	//.port_mirror_add	= ksz_port_mirror_add,
+	//.port_mirror_del	= ksz_port_mirror_del,
+};
+
+
+
 static const struct bin_attribute ks8995_registers_attr = {
 	.attr = {
 		.name   = "registers",
@@ -444,6 +677,7 @@ static int ks8995_probe(struct spi_device *spi)
 	struct ks8995_switch *ks;
 	int err;
 	int variant = spi_get_device_id(spi)->driver_data;
+	int i;
 
 	if (variant >= max_variant) {
 		dev_err(&spi->dev, "bad chip variant %d\n", variant);
@@ -453,6 +687,15 @@ static int ks8995_probe(struct spi_device *spi)
 	ks = devm_kzalloc(&spi->dev, sizeof(*ks), GFP_KERNEL);
 	if (!ks)
 		return -ENOMEM;
+
+	// Allocate a 4-port switch
+	ks->ds = dsa_switch_alloc(&spi->dev, 4);
+	if (!ks->ds) {
+		devm_kfree(&spi->dev, ks);
+		return -ENOMEM;
+	}
+	ks->ds->priv = ks;
+	ks->ds->ops = &ks8995_switch_ops;
 
 	mutex_init(&ks->lock);
 	ks->spi = spi;
@@ -523,12 +766,34 @@ static int ks8995_probe(struct spi_device *spi)
 	dev_info(&spi->dev, "%s device found, Chip ID:%x, Revision:%x\n",
 		 ks->chip->name, ks->chip->chip_id, ks->revision_id);
 
+	err = dsa_register_switch(ks->ds);
+	if (err != 0) {
+		dev_err(&spi->dev, "unable to register dsa switch, err=%d\n",
+				    err);
+		return err;
+	}
+	// Now is the time to fix up MAC addresses
+	for (i = 0; i < ks->ds->num_ports; i++) {
+		struct dsa_port *port = &ks->ds->ports[i];
+		if (dsa_is_cpu_port(ks->ds, i))
+			continue;
+		if (port && port->netdev) {
+			// TODO: TEMP: filthy
+			//ether_addr_copy(port->netdev->dev_addr, addr->sa_data);
+			port->netdev->dev_addr[5] = 0x31+i;
+		}
+	}
+
+
+
 	return 0;
 }
 
 static int ks8995_remove(struct spi_device *spi)
 {
 	struct ks8995_switch *ks = spi_get_drvdata(spi);
+
+	dsa_unregister_switch(ks->ds);
 
 	sysfs_remove_bin_file(&spi->dev.kobj, &ks->regs_attr);
 
@@ -554,4 +819,5 @@ module_spi_driver(ks8995_driver);
 MODULE_DESCRIPTION(DRV_DESC);
 MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR("Gabor Juhos <juhosg at openwrt.org>");
+MODULE_AUTHOR("Michael Walton <mike@farsouthnet.com>");
 MODULE_LICENSE("GPL v2");

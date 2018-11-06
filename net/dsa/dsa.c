@@ -52,6 +52,9 @@ const struct dsa_device_ops *dsa_device_ops[DSA_TAG_LAST] = {
 #ifdef CONFIG_NET_DSA_TAG_KSZ
 	[DSA_TAG_PROTO_KSZ] = &ksz_netdev_ops,
 #endif
+#ifdef CONFIG_NET_DSA_TAG_KSZ879X
+	[DSA_TAG_PROTO_KSZ879X] = &ksz879x_netdev_ops,
+#endif
 #ifdef CONFIG_NET_DSA_TAG_LAN9303
 	[DSA_TAG_PROTO_LAN9303] = &lan9303_netdev_ops,
 #endif
