@@ -778,9 +778,28 @@ static int ks8995_probe(struct spi_device *spi)
 		if (dsa_is_cpu_port(ks->ds, i))
 			continue;
 		if (port && port->netdev) {
-			// TODO: TEMP: filthy
-			//ether_addr_copy(port->netdev->dev_addr, addr->sa_data);
-			port->netdev->dev_addr[5] = 0x31+i;
+			bool havemac = false;
+			// Get label on port (e.g. eth0) and look for a corresponding alias to get the MAC address (e.g. ethernet0)
+			if (strncmp("eth", port->netdev->name, 3) == 0 && strlen(port->netdev->name) == 4) {
+				char n = port->netdev->name[3];
+				char enb[16];
+				const struct device_node *nd;
+				sprintf(enb, "ethernet%c", (int) n);
+				nd = of_find_node_by_path(enb);
+				if (nd) {
+					int len;
+					const void *addr = of_get_property(nd, "local-mac-address", &len);
+					if (addr && len == ETH_ALEN) {
+						memcpy(port->netdev->dev_addr, addr, ETH_ALEN);
+						havemac = true;
+					}
+				}
+			}
+			if (!havemac) {
+				dev_warn(&spi->dev, "No MAC address found for %s, munging by adding %d to lsb\n",
+					 port->netdev->name, i);
+				port->netdev->dev_addr[5] += i;
+			}
 		}
 	}
 

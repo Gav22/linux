@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.6) xenial; urgency=medium
+
+  * DSA driver for KSZ8794 switch
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 07 Nov 2018 10:37:56 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.5) xenial; urgency=medium
 
   * Fix update-boot for /boot relative to / mount point
