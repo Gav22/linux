@@ -20,26 +20,23 @@ for image in `ls -t /boot/vmlinuz-* | grep -v dpkg`; do
 
   echo "Adding linux-image-${version} to the list..."
   
+  initrd="INITRD ${boot}/initrd.img-$version"
   if [ -f /boot/initrd.img-$version ]; then
-    initrd="INITRD ${boot}/initrd.img-$version"
     echo "> found initrd"
   else 
-    echo "Missing initrd for image ${version}! Cannot continue ..."
-    exit 1
+    echo "Missing initrd for image ${version}! Maybe not yet created..."
   fi
   
   if [ -f /boot/dtb-${version} ]; then
     echo "> found dtb"
   else 
-    echo "Missing dtb for image ${version}! Cannot continue ..."
-    exit 1
+    echo "Missing dtb for image ${version}! Maybe not yet created..."
   fi
 
   fdt="FDT ${boot}/dtb-${version}"
   
   echo "Running depmod..."
   depmod ${version}
-
   
   # Find root mount point, this works also in chroot if /proc is bind mounted
   root="UUID=`findmnt -n -o UUID --target /`"

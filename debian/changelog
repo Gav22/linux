@@ -1,6 +1,7 @@
 linux-4.14.14-1-wanderer (4.14.14-1.7) xenial; urgency=medium
 
   * Enable USB network driver modules
+  * Make update-boot more tolerant
 
  -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 07 Nov 2018 15:24:51 +1300
 
