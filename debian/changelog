@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.7) xenial; urgency=medium
+
+  * Enable USB network driver modules
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 07 Nov 2018 15:24:51 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.6) xenial; urgency=medium
 
   * DSA driver for KSZ8794 switch
