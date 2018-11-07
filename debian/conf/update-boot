@@ -50,7 +50,7 @@ LABEL linux-image-$version
   KERNEL ${boot}/vmlinuz-$version
   ${initrd}
   ${fdt}
-  APPEND root=${root} console=ttyS0,115200 rootwait rw
+  APPEND root=${root} console=ttyS0,115200 rootwait rw net.ifnames=0
 EOF
 done
 

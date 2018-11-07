@@ -2,6 +2,7 @@ linux-4.14.14-1-wanderer (4.14.14-1.6) xenial; urgency=medium
 
   * DSA driver for KSZ8794 switch
   * Update device tree for more sensible ethernet configuration selection
+  * Add net.ifnames=0 to fix #1887 - USB devices get renamed incorrectly
 
  -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 07 Nov 2018 10:37:56 +1300
 
