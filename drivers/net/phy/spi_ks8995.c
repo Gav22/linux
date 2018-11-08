@@ -693,7 +693,6 @@ static int ks8995_probe(struct spi_device *spi)
 	// Allocate a 4-port switch
 	ks->ds = dsa_switch_alloc(&spi->dev, 4);
 	if (!ks->ds) {
-		devm_kfree(&spi->dev, ks);
 		return -ENOMEM;
 	}
 	ks->ds->priv = ks;
@@ -770,8 +769,15 @@ static int ks8995_probe(struct spi_device *spi)
 
 	err = dsa_register_switch(ks->ds);
 	if (err != 0) {
-		dev_err(&spi->dev, "unable to register dsa switch, err=%d\n",
+		// This can return -517 EPROBE_DEFER, in which case we need to clean up cos we will be called later
+		if (err == -EPROBE_DEFER) {
+			dev_info(&spi->dev, "DSA is deferring my probe until later\n");
+		} else {
+			dev_err(&spi->dev, "unable to register dsa switch, err=%d\n",
 				    err);
+		}
+		sysfs_remove_bin_file(&spi->dev.kobj, &ks->regs_attr);
+
 		return err;
 	}
 	// Now is the time to fix up MAC addresses
@@ -781,12 +787,14 @@ static int ks8995_probe(struct spi_device *spi)
 			continue;
 		if (port && port->netdev) {
 			bool havemac = false;
+			int m = i;
 			// Get label on port (e.g. eth0) and look for a corresponding alias to get the MAC address (e.g. ethernet0)
 			if (strncmp("eth", port->netdev->name, 3) == 0 && strlen(port->netdev->name) == 4) {
 				char n = port->netdev->name[3];
 				char enb[16];
 				const struct device_node *nd;
 				sprintf(enb, "ethernet%c", (int) n);
+				m = (int) (n - '0'); /* '0' -> (int) 0 */
 				nd = of_find_node_by_path(enb);
 				if (nd) {
 					int len;
@@ -799,8 +807,8 @@ static int ks8995_probe(struct spi_device *spi)
 			}
 			if (!havemac) {
 				dev_warn(&spi->dev, "No MAC address found for %s, munging by adding %d to lsb\n",
-					 port->netdev->name, i);
-				port->netdev->dev_addr[5] += i;
+					 port->netdev->name, m);
+				port->netdev->dev_addr[5] += m;
 			}
 		}
 	}
