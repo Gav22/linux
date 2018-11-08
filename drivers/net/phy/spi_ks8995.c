@@ -511,7 +511,9 @@ static int ks8995_setup(struct dsa_switch *ds)
 			port_setup(ks, i);
 
 			if (!netif_running(port->netdev)) {
+				rtnl_lock();
 				dev_open(port->netdev);
+				rtnl_unlock();
 			}
 
 			// Rename our cpu port's device
