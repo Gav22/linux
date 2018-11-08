@@ -460,12 +460,15 @@ static void port_setup(struct ks8995_switch *ks, int port)
 {
 	/* enable tag tail for host port */
 	if (port == ks->cpu_port) {
-		ks8995_write_reg(ks, 0x02, 0x4c); // soft power down
+		ks8995_write_reg(ks, KS8995_REG_GC0, 0x4c); // soft power down
 		usleep_range(10, 20);
-		ks8995_write_reg(ks, 0x02, 0x0c);
+		ks8995_write_reg(ks, KS8995_REG_GC0, 0x0c);
+		usleep_range(10, 20);
+		ks8995_write_reg(ks, KS8995_REG_GC2, 0xf2); // default + legal max packet size = 1536 (rather than 1522)
 	    //ksz8895_write(dev, 0x0e, 0x00);
 		ks8995_write_reg(ks, KS8995_REG_GC10, 0x46); // Tail tagging enable
 		ks8995_write_reg(ks, KS8995_REG_PC(CPU_PORT_OFS, 0x12), 0x07); // learning disable, tx/rx enable
+		ks8995_write_reg(ks, KS8995_REG_PC(CPU_PORT_OFS, 0xb1), 0x02); // 4 egress queues for switch MII
 		ks8995_write_reg(ks, KS8995_REG_PC(CPU_PORT_OFS, 0xb1), 0x02); // 4 egress queues for switch MII
 	} else {
 		ks8995_write_reg(ks, KS8995_REG_PC(port, 0x12), 0x03); // learning disable, rx enable
@@ -512,6 +515,7 @@ static int ks8995_setup(struct dsa_switch *ds)
 
 			if (!netif_running(port->netdev)) {
 				rtnl_lock();
+				dev_set_mtu(port->netdev, 1504);
 				dev_open(port->netdev);
 				rtnl_unlock();
 			}
