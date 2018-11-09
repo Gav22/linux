@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.9) xenial; urgency=medium
+
+  * Debian 1.9 captures fixes below
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Fri, 09 Nov 2018 16:45:05 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.8) xenial; urgency=medium
 
   * Add watchdog timer support
