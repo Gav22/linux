@@ -117,7 +117,7 @@ struct max6639_data {
 
 #define MAX6639_FAN_NUM_STATES 4
 /* off, slow, medium, fast */
-static u8 max6639_fan_states[] = { 255, 45, 30, 15 };
+static u8 max6639_fan_states[] = { 0, 75, 105, 120 };
 
 static struct max6639_data *max6639_update_device(struct device *dev)
 {
@@ -146,6 +146,7 @@ static struct max6639_data *max6639_update_device(struct device *dev)
 		for (i = 0; i < 2; i++) {
 			res = i2c_smbus_read_byte_data(client,
 					MAX6639_REG_FAN_CNT(i));
+			dev_info(&client->dev, "ch %d val %d\n", i, res);
 			if (res < 0) {
 				ret = ERR_PTR(res);
 				goto abort;
@@ -331,12 +332,12 @@ static ssize_t set_pwm(struct device *dev,
 	mutex_lock(&data->update_lock);
 	//data->pwm[attr->index] = (u8)(val * 120 / 255);
 	data->pwm[attr->index] = (u8)(val);
-	/*i2c_smbus_write_byte_data(client,
-				  MAX6639_REG_TARGTDUTY(attr->index),
-				  data->pwm[attr->index]);*/
 	i2c_smbus_write_byte_data(client,
+				  MAX6639_REG_TARGTDUTY(attr->index),
+				  data->pwm[attr->index]);
+	/*i2c_smbus_write_byte_data(client,
 			MAX6639_REG_TARGET_CNT(attr->index),
-			data->pwm[attr->index]);
+			data->pwm[attr->index]);*/
 	mutex_unlock(&data->update_lock);
 	return count;
 }
@@ -464,6 +465,8 @@ static int max6639_init_client(struct i2c_client *client,
 
 	if (max6639_info)
 		rpm_range = rpm_range_to_reg(max6639_info->rpm_range);
+	else
+		rpm_range = 3; // 16000rpm
 	data->rpm_range = rpm_range;
 
 	for (i = 0; i < 2; i++) {
@@ -480,10 +483,11 @@ static int max6639_init_client(struct i2c_client *client,
 		/*err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_CONFIG1(i),
 			MAX6639_FAN_CONFIG1_PWM | rpm_range);*/
-		/* Fans config RPM 8000 range, manual rpm control */
+		/* Fans config RPM 16000 range, manual rpm control 0x03 */
+		/* Fans config RPM 16000 range, manual pwm control 0x83 */
 		err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_CONFIG1(i),
-			0x12);
+			0x83);
 		if (err)
 			goto exit;
 
@@ -495,23 +499,24 @@ static int max6639_init_client(struct i2c_client *client,
 			err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_FAN_CONFIG2a(i), 0x02);*/
 		err = i2c_smbus_write_byte_data(client,
-			MAX6639_REG_FAN_CONFIG2a(i), 0x11);
+			MAX6639_REG_FAN_CONFIG2a(i), 0x00);
 		if (err)
 			goto exit;
 
 		/*
 		 * /THERM full speed enable,
-		 * PWM frequency 100Hz, see also GCONFIG below
+		 * PWM frequency, see also GCONFIG below
 		 */
 		err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_CONFIG3(i),
-			MAX6639_FAN_CONFIG3_THERM_FULL_SPEED | 0x00);
+			MAX6639_FAN_CONFIG3_THERM_FULL_SPEED | 0x01);
 		if (err)
 			goto exit;
 
-		err = i2c_smbus_write_byte_data(client,
+		/* Min/target 3200 rpm */
+		/*err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_TARGET_CNT(i),
-			0x4b); /* Min/target 3200 rpm */
+			0x4b);*/
 
 		err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_START_TEMP(i),
@@ -537,8 +542,8 @@ static int max6639_init_client(struct i2c_client *client,
 			goto exit;
 
 		/* PWM 120/120 (i.e. 100%) */
-		//data->pwm[i] = 120;
-		data->pwm[i] = 0x4b;
+		data->pwm[i] = 120;
+		//data->pwm[i] = 0x4b;
 		/*err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_TARGTDUTY(i), data->pwm[i]);
 		if (err)
@@ -614,8 +619,11 @@ max6639_fan_set_cur_state(struct thermal_cooling_device *cdev, unsigned long sta
 	for (i = 0; i < 2; i++) {
 		data->pwm[i] = max6639_fan_states[state];
 		i2c_smbus_write_byte_data(data->client,
+					  MAX6639_REG_TARGTDUTY(i),
+					  data->pwm[i]);
+		/*i2c_smbus_write_byte_data(data->client,
 				MAX6639_REG_TARGET_CNT(0),
-				data->pwm[i]);
+				data->pwm[i]);*/
 	}
 	mutex_unlock(&data->update_lock);
 

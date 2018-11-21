@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.13) xenial; urgency=medium
+
+  * Tweaks to thermal zone and MAX6639 driver, use PWM mode
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Thu, 22 Nov 2018 10:38:35 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.12) xenial; urgency=medium
 
   * On-die temperature measurement

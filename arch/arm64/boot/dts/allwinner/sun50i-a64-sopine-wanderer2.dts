@@ -265,25 +265,25 @@
 	
 			trips {
 				cpu_warm: cpu_warm {
-					temperature = <45000>;
+					temperature = <15000>;
 					hysteresis = <2000>;
-					type = "passive";
+					type = "active";
 				};
 	
 				cpu_hot: cpu_hot {
-					temperature = <75000>;
+					temperature = <48000>;
 					hysteresis = <2000>;
-					type = "passive";
+					type = "active";
 				};
 	
 				cpu_very_hot: cpu_very_hot {
-					temperature = <85000>;
+					temperature = <70000>;
 					hysteresis = <2000>;
-					type = "passive";
+					type = "active";
 				};
 	
 				cpu_crit: cpu_crit {
-					temperature = <95000>;
+					temperature = <98000>;
 					hysteresis = <2000>;
 					type = "critical";
 				};
