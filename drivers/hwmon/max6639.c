@@ -8,6 +8,9 @@
  * based on the initial MAX6639 support from semptian.net
  * by He Changqing <hechangqing@semptian.com>
  *
+ * Modification for thermal zone support
+ * Copyright (C) 2018 Michael Walton <mike@farsouthnet.com>
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -32,6 +35,9 @@
 #include <linux/hwmon-sysfs.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
+#include <linux/thermal.h>
+#include <linux/of_gpio.h>
+#include <linux/interrupt.h>
 #include <linux/platform_data/max6639.h>
 
 /* Addresses to scan */
@@ -67,6 +73,7 @@ static const unsigned short normal_i2c[] = { 0x2c, 0x2e, 0x2f, I2C_CLIENT_END };
 #define MAX6639_GCONFIG_PWM_FREQ_HI		0x08
 
 #define MAX6639_FAN_CONFIG1_PWM			0x80
+#define MAX6639_FAN_CONFIG1_RPM			0x10
 
 #define MAX6639_FAN_CONFIG3_THERM_FULL_SPEED	0x40
 
@@ -81,9 +88,15 @@ static const int rpm_ranges[] = { 2000, 4000, 8000, 16000 };
  */
 struct max6639_data {
 	struct i2c_client *client;
+	struct thermal_cooling_device *tcd;
+	struct thermal_zone_device *tzd;
+	int gpio_ot;
+	int gpio_ot_irq;
 	struct mutex update_lock;
+	
 	char valid;		/* !=0 if following fields are valid */
 	unsigned long last_updated;	/* In jiffies */
+	int fan_state;
 
 	/* Register values sampled regularly */
 	u16 temp[2];		/* Temperature, in 1/8 C, 0..255 C */
@@ -101,6 +114,10 @@ struct max6639_data {
 	u8 ppr;			/* Pulses per rotation 0..3 for 1..4 ppr */
 	u8 rpm_range;		/* Index in above rpm_ranges table */
 };
+
+#define MAX6639_FAN_NUM_STATES 4
+/* off, slow, medium, fast */
+static u8 max6639_fan_states[] = { 255, 45, 30, 15 };
 
 static struct max6639_data *max6639_update_device(struct device *dev)
 {
@@ -291,7 +308,8 @@ static ssize_t show_pwm(struct device *dev,
 	struct sensor_device_attribute *attr = to_sensor_dev_attr(dev_attr);
 	struct max6639_data *data = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", data->pwm[attr->index] * 255 / 120);
+	//return sprintf(buf, "%d\n", data->pwm[attr->index] * 255 / 120);
+	return sprintf(buf, "%d\n", data->pwm[attr->index]);
 }
 
 static ssize_t set_pwm(struct device *dev,
@@ -311,10 +329,14 @@ static ssize_t set_pwm(struct device *dev,
 	val = clamp_val(val, 0, 255);
 
 	mutex_lock(&data->update_lock);
-	data->pwm[attr->index] = (u8)(val * 120 / 255);
-	i2c_smbus_write_byte_data(client,
+	//data->pwm[attr->index] = (u8)(val * 120 / 255);
+	data->pwm[attr->index] = (u8)(val);
+	/*i2c_smbus_write_byte_data(client,
 				  MAX6639_REG_TARGTDUTY(attr->index),
-				  data->pwm[attr->index]);
+				  data->pwm[attr->index]);*/
+	i2c_smbus_write_byte_data(client,
+			MAX6639_REG_TARGET_CNT(attr->index),
+			data->pwm[attr->index]);
 	mutex_unlock(&data->update_lock);
 	return count;
 }
@@ -449,41 +471,56 @@ static int max6639_init_client(struct i2c_client *client,
 		/* Set Fan pulse per revolution */
 		err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_FAN_PPR(i),
-				data->ppr << 6);
+				(data->ppr << 6) | 0x1e
+				); // MW - min tach count for 8000rpm max
 		if (err)
 			goto exit;
 
 		/* Fans config PWM, RPM */
+		/*err = i2c_smbus_write_byte_data(client,
+			MAX6639_REG_FAN_CONFIG1(i),
+			MAX6639_FAN_CONFIG1_PWM | rpm_range);*/
+		/* Fans config RPM 8000 range, manual rpm control */
 		err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_CONFIG1(i),
-			MAX6639_FAN_CONFIG1_PWM | rpm_range);
+			0x12);
 		if (err)
 			goto exit;
 
 		/* Fans PWM polarity high by default */
-		if (max6639_info && max6639_info->pwm_polarity == 0)
+		/*if (max6639_info && max6639_info->pwm_polarity == 0)
 			err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_FAN_CONFIG2a(i), 0x00);
 		else
 			err = i2c_smbus_write_byte_data(client,
-				MAX6639_REG_FAN_CONFIG2a(i), 0x02);
+				MAX6639_REG_FAN_CONFIG2a(i), 0x02);*/
+		err = i2c_smbus_write_byte_data(client,
+			MAX6639_REG_FAN_CONFIG2a(i), 0x11);
 		if (err)
 			goto exit;
 
 		/*
 		 * /THERM full speed enable,
-		 * PWM frequency 25kHz, see also GCONFIG below
+		 * PWM frequency 100Hz, see also GCONFIG below
 		 */
 		err = i2c_smbus_write_byte_data(client,
 			MAX6639_REG_FAN_CONFIG3(i),
-			MAX6639_FAN_CONFIG3_THERM_FULL_SPEED | 0x03);
+			MAX6639_FAN_CONFIG3_THERM_FULL_SPEED | 0x00);
 		if (err)
 			goto exit;
+
+		err = i2c_smbus_write_byte_data(client,
+			MAX6639_REG_TARGET_CNT(i),
+			0x4b); /* Min/target 3200 rpm */
+
+		err = i2c_smbus_write_byte_data(client,
+			MAX6639_REG_FAN_START_TEMP(i),
+			21); /* start fan at 21 deg */
 
 		/* Max. temp. 80C/90C/100C */
 		data->temp_therm[i] = 80;
 		data->temp_alert[i] = 90;
-		data->temp_ot[i] = 100;
+		data->temp_ot[i] = 90;
 		err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_THERM_LIMIT(i),
 				data->temp_therm[i]);
@@ -500,16 +537,17 @@ static int max6639_init_client(struct i2c_client *client,
 			goto exit;
 
 		/* PWM 120/120 (i.e. 100%) */
-		data->pwm[i] = 120;
-		err = i2c_smbus_write_byte_data(client,
+		//data->pwm[i] = 120;
+		data->pwm[i] = 0x4b;
+		/*err = i2c_smbus_write_byte_data(client,
 				MAX6639_REG_TARGTDUTY(i), data->pwm[i]);
 		if (err)
-			goto exit;
+			goto exit;*/
 	}
 	/* Start monitoring */
 	err = i2c_smbus_write_byte_data(client, MAX6639_REG_GCONFIG,
-		MAX6639_GCONFIG_DISABLE_TIMEOUT | MAX6639_GCONFIG_CH2_LOCAL |
-		MAX6639_GCONFIG_PWM_FREQ_HI);
+		MAX6639_GCONFIG_DISABLE_TIMEOUT | MAX6639_GCONFIG_CH2_LOCAL /*|
+		MAX6639_GCONFIG_PWM_FREQ_HI*/);
 exit:
 	return err;
 }
@@ -535,17 +573,91 @@ static int max6639_detect(struct i2c_client *client,
 	return 0;
 }
 
+/* thermal cooling device callbacks */
+static int max6639_fan_get_max_state(struct thermal_cooling_device *cdev,
+				 unsigned long *state)
+{
+	struct max6639_data *data = cdev->devdata;
+
+	if (!data)
+		return -EINVAL;
+
+	*state = MAX6639_FAN_NUM_STATES;
+
+	return 0;
+}
+
+static int max6639_fan_get_cur_state(struct thermal_cooling_device *cdev,
+				 unsigned long *state)
+{
+	struct max6639_data *data = cdev->devdata;
+
+	if (!data)
+		return -EINVAL;
+
+	*state = data->fan_state;
+
+	return 0;
+}
+
+static int
+max6639_fan_set_cur_state(struct thermal_cooling_device *cdev, unsigned long state)
+{
+	struct max6639_data *data = cdev->devdata;
+	int ret, i;
+
+	if (!data || (state > (MAX6639_FAN_NUM_STATES-1)))
+		return -EINVAL;
+
+	mutex_lock(&data->update_lock);
+	//data->pwm[attr->index] = (u8)(val * 120 / 255);
+	for (i = 0; i < 2; i++) {
+		data->pwm[i] = max6639_fan_states[state];
+		i2c_smbus_write_byte_data(data->client,
+				MAX6639_REG_TARGET_CNT(0),
+				data->pwm[i]);
+	}
+	mutex_unlock(&data->update_lock);
+
+	data->fan_state = state;
+
+	return ret;
+}
+
+static const struct thermal_cooling_device_ops max6639_fan_cooling_ops = {
+	.get_max_state = max6639_fan_get_max_state,
+	.get_cur_state = max6639_fan_get_cur_state,
+	.set_cur_state = max6639_fan_set_cur_state,
+};
+
+static irqreturn_t max6639_ot_interrupt(int irq, void *dev_instance)
+{
+	struct max6639_data *data = dev_instance;
+	//int temp;
+	dev_warn(&data->client->dev, "Over temperature alert!\n");
+
+	// force critical thermal alarm state
+	data->tzd->temperature = 110000;
+	thermal_notify_framework(data->tzd, 3);
+
+	return IRQ_HANDLED;
+}
+
+
 static int max6639_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
 {
 	struct device *dev = &client->dev;
 	struct max6639_data *data;
 	struct device *hwmon_dev;
+	const char *thermal_zone;
 	int err;
 
 	data = devm_kzalloc(dev, sizeof(struct max6639_data), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
+
+	i2c_set_clientdata(client, data);
 
 	data->client = client;
 	mutex_init(&data->update_lock);
@@ -558,6 +670,41 @@ static int max6639_probe(struct i2c_client *client,
 	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
 							   data,
 							   max6639_groups);
+
+	/* Now register cooling provider and find associated zone */
+
+	//data->tzd = thermal_zone_of_sensor_register();
+	data->tcd = thermal_of_cooling_device_register(dev->of_node,
+			(char *)dev_name(dev), data,
+			&max6639_fan_cooling_ops);
+
+	if (!device_property_read_string(dev, "thermal-zone",
+					 &thermal_zone)) {
+		data->tzd = thermal_zone_get_zone_by_name(thermal_zone);
+		if (IS_ERR(data->tzd)) {
+			dev_warn(dev, "Failed to get thermal zone: %s\n", thermal_zone);
+		} else {
+			dev_info(dev, "Got thermal zone: %s\n", thermal_zone);
+		}
+	}
+
+	/* Get gpio for therm interrupt */
+	data->gpio_ot = of_get_named_gpio_flags(dev->of_node, "ot-gpios", 0, NULL);
+	if (data->gpio_ot < 0) {
+		dev_warn(dev, "Unable to find gpio for overtemperature alert\n");
+	} else {
+		if ((devm_gpio_request(dev, data->gpio_ot, "max6639_OT") == 0) &&
+		    (gpio_direction_input(data->gpio_ot) == 0)) {
+			data->gpio_ot_irq = gpio_to_irq(data->gpio_ot);
+			// Disable unused channel 1 OT alarm
+			i2c_smbus_write_byte_data(data->client, MAX6639_REG_OUTPUT_MASK,
+				  0x23);
+			err = devm_request_irq(dev, data->gpio_ot_irq, max6639_ot_interrupt, IRQF_TRIGGER_FALLING, "max6639_OT", data);
+		} else {
+			dev_warn(dev, "Unable to claim gpio for overtemperature alert\n");
+		}
+	}
+
 	return PTR_ERR_OR_ZERO(hwmon_dev);
 }
 
@@ -585,6 +732,16 @@ static int max6639_resume(struct device *dev)
 }
 #endif /* CONFIG_PM_SLEEP */
 
+static int max6639_remove(struct i2c_client *client)
+{
+	//struct device *dev = &client->dev;
+	struct max6639_data *data = i2c_get_clientdata(client);
+
+	thermal_cooling_device_unregister(data->tcd);
+
+	return 0;
+}
+
 static const struct i2c_device_id max6639_id[] = {
 	{"max6639", 0},
 	{ }
@@ -601,6 +758,7 @@ static struct i2c_driver max6639_driver = {
 		   .pm = &max6639_pm_ops,
 		   },
 	.probe = max6639_probe,
+	.remove = max6639_remove,
 	.id_table = max6639_id,
 	.detect = max6639_detect,
 	.address_list = normal_i2c,
@@ -609,5 +767,6 @@ static struct i2c_driver max6639_driver = {
 module_i2c_driver(max6639_driver);
 
 MODULE_AUTHOR("Roland Stigge <stigge@antcom.de>");
+MODULE_AUTHOR("Michael Walton <mike@farsouthnet.com>");
 MODULE_DESCRIPTION("max6639 driver");
 MODULE_LICENSE("GPL");
