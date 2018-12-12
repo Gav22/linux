@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.15) xenial; urgency=medium
+
+  * Support VLAN in dwmac driver
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 12 Dec 2018 14:07:10 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.14) xenial; urgency=medium
 
   * Include usb ohci modules for USB1.1 support
