@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.16) xenial; urgency=medium
+
+  * Add Provides: linux-image to control
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 12 Dec 2018 17:55:25 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.15) xenial; urgency=medium
 
   * Support VLAN in dwmac driver

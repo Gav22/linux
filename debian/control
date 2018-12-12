@@ -7,6 +7,7 @@ Homepage: http://www.kernel.org/
 
 Package: linux-image-4.14.14-1-wanderer
 Architecture: any
+Provides: linux-image
 Description: Linux kernel, version ${binary:Version} on ${kernel:debarch} (FSN Wanderer 2)
  This package contains the Linux kernel, modules and corresponding other
  files, version: ${binary:Version}, for Far South Networks Wanderer 2
