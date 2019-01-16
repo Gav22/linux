@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.17) xenial; urgency=medium
+
+  * Add option driver for modems
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Thu, 17 Jan 2019 09:31:08 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.16) xenial; urgency=medium
 
   * Add Provides: linux-image to control
