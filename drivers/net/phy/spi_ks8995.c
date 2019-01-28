@@ -309,6 +309,12 @@ static int ks8995_reset(struct ks8995_switch *ks)
 	// MW: temp, enable ingress clock delay
 	ks8995_write_reg(ks, 0x56, 0xff);
 
+	// Re EMC - disable unused REFCLKO
+	ks8995_write_reg(ks, 0x0b, 0x00);
+	// Re EMC - reduce GMII drive strength to 16mA (was 24mA)
+	ks8995_write_reg(ks, 0xa3, 0x42);
+
+
 	return ks8995_start(ks);
 }
 
