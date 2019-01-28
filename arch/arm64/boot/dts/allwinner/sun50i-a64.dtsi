@@ -580,7 +580,7 @@
 				pins = "PD10", "PD11", "PD13", "PD14", "PD17",
 				       "PD18", "PD19", "PD20", "PD22", "PD23";
 				function = "emac";
-				drive-strength = <40>;
+				drive-strength = <20>;
 			};
 
 			rgmii_pins: rgmii_pins {
@@ -588,7 +588,7 @@
 				       "PD13", "PD15", "PD16", "PD17", "PD18",
 				       "PD19", "PD20", "PD21", "PD22", "PD23";
 				function = "emac";
-				drive-strength = <40>;
+				drive-strength = <20>;
 			};
 
 			uart0_pins_a: uart0@0 {

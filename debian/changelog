@@ -1,3 +1,11 @@
+linux-4.14.14-1-wanderer (4.14.14-1.19) xenial; urgency=medium
+
+  * KSZ8794 EMC tweaks
+  * Reduce drive strength on SOC GMII from 40mA to 20mA
+  * Reduce WiFi SDIO max freq from 50MHz to 40MHz
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Tue, 29 Jan 2019 10:58:28 +1300
+
 linux-4.14.14-1-wanderer (4.14.14-1.18) xenial; urgency=medium
 
   * Add ppp drivers
