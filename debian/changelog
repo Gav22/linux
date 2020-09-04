@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.21) xenial; urgency=medium
+
+  * Add i2c and spi to dtb sopine-baseboard
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Fri, 04 Sep 2020 12:03:28 +0200
+ 
 linux-4.14.14-1-wanderer (4.14.14-1.20) xenial; urgency=medium
 
   * Enable USB HIDRAW support for mcp2210
