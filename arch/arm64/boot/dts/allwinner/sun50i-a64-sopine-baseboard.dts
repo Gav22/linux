@@ -75,6 +75,51 @@
 		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
 	};
 };
+&pio {
+	i2c0_pins: i2c0_pins {
+		pins = "PH0", "PH1";
+		function = "i2c0";
+		bias-pull-up;
+	};
+	spi1_pins: spi1_pins {
+		pins = "PD0", "PD1", "PD2", "PD3";
+		function = "spi1";
+	};
+	spi0_pins: spi0 {
+		pins = "PC0", "PC1", "PC2", "PC3";
+		function = "spi0";
+	};
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+	usb2514b@2c {
+		compatible = "microchip,usb2514b";
+		reg = <0x2c>;
+		reset-gpios = <&pio 7 10 GPIO_ACTIVE_LOW>;
+	};
+	max6639: max6639@2e {
+		compatible = "maxim,max6639";
+		reg = <0x2e>;
+		ot-gpios = <&pio 1 3 GPIO_ACTIVE_LOW>; /* ~overtemp input */
+		thermal-zone = "cpu-thermal"; /* so we can send it events */
+		#cooling-cells = <2>;
+	};
+	eeprom@50 {
+		compatible = "atmel,24c02";
+		reg = <0x50>;
+	};
+};
+&i2c1 {
+	status = "okay";
+	bias-pull-up;
+};
+
+&s_i2c {
+	status = "okay";
+};
 
 &de {
 	status = "okay";
