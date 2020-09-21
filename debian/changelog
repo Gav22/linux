@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.22) xenial; urgency=medium
+
+  * Enable all module support as per kernel 5.8.5
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Mon, 20 Sep 2020 13:50:28 +0200
+
 linux-4.14.14-1-wanderer (4.14.14-1.21) xenial; urgency=medium
 
   * Add i2c and spi to dtb sopine-baseboard

@@ -117,10 +117,6 @@
 	bias-pull-up;
 };
 
-&s_i2c {
-	status = "okay";
-};
-
 &de {
 	status = "okay";
 };
