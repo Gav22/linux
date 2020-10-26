@@ -1,0 +1,518 @@
+/ SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+// Copyright (c) 2017 Icenowy Zheng <icenowy@aosc.xyz>
+// Based on sun50i-a64-pine64.dts, which is:
+//   Copyright (c) 2016 ARM Ltd.
+
+/dts-v1/;
+
+#include "sun50i-a64-sopine.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/thermal/thermal.h>
+
+/	model = "SoPine with MSCM_v2.x";
+	compatible = "pine64,mscm", "pine64,sopine",
+		     "allwinner,sun50i-a64";
+
+	/* Holder for manufacturing info passed from boot */
+	mfginfo: mfginfo {
+		fsn_serial = "";
+		test_date = "";
+		board_name = "";
+	};
+
+	/* Just holders for additional MAC addresses passed from boot */
+	vmac1: vmac1 {
+	};
+	
+	vmac2: vmac2 {
+	};
+	
+	aliases {
+		ethernet0 = &emac;
+		ethernet1 = &vmac1;
+		ethernet2 = &vmac2;
+		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &uart2;
+		serial3 = &uart3;
+		serial4 = &uart4;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	hdmi-connector {
+		compatible = "hdmi-connector";
+		type = "a";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
+	reg_vcc1v8: vcc1v8 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc1v8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	
+	leds {
+		compatible = "gpio-leds";
+		blue {
+			label = "wanderer:blue";
+			gpios = <&pio 7 9 GPIO_ACTIVE_HIGH>; /* PH9 */
+			default-state = "on";
+		};
+		wifi_wake {
+			label = "wifi:wake";
+			gpios = <&r_pio 0 3 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+		/*wifi_en {
+			label = "wifi:en";
+			gpios = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+		wifi_rst {
+			label = "wifi:rst";
+			gpios = <&r_pio 0 4 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};*/
+		
+	};
+	spi0: spi@1c68000 {
+		compatible = "allwinner,sun6i-a31-spi";
+		reg = <0x01c68000 0x1000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi0_pins>;
+		interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_SPI0>, <&ccu CLK_SPI0>;
+		resets = <&ccu RST_BUS_SPI0>;
+		clock-names = "ahb", "mod";
+		/*dmas = <&dma 23>, <&dma 23>;
+		dma-names = "rx", "tx";*/
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		flash: w25q128@0 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "winbond,w25q128", "jedec,spi-nor";
+			spi-max-frequency = <15000000>;
+			reg = <0>;
+
+			partition@00000 {
+				label = "U-boot";
+				reg = <0x00000 0xde000>;
+				read-only;
+			};
+	
+			partition@de000 {
+				label = "ROM";
+				reg = <0xde000 0x2000>;
+				read-only;
+			};
+	
+			partition@e0000 {
+				label = "U-boot-env";
+				reg = <0xe0000 0x10000>;
+			};
+	
+			partition@f0000 {
+				label = "env2";
+				reg = <0xe0000 0x10000>;
+			};
+
+			partition@100000 {
+				label = "Unused1";
+				reg = <0x100000 0x100000>;
+			};
+
+		};
+	};
+	
+	/* Option: ethernet via KSZ8794 switch */
+	emacsw: ethernet@1c30000r {
+		compatible = "allwinner,sun50i-a64-emac", "fsn,wand2-3-mac";
+		syscon = <&syscon>;
+		reg = <0x01c30000 0x10000>;
+		interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "macirq";
+		resets = <&ccu RST_BUS_EMAC>;
+		reset-names = "stmmaceth";
+		clocks = <&ccu CLK_BUS_EMAC>;
+		clock-names = "stmmaceth";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rgmii_pins>;
+		phy-mode = "rgmii";
+		phy-supply = <&reg_dc1sw>;
+		status = "disabled"; /* u-boot will enable if detected */
+		fixed-link {
+	    	speed = <1000>;
+	      	full-duplex;
+		};
+	};
+	
+	spi1: spi@01c69000 {
+		compatible = "allwinner,sun6i-a31-spi";
+		reg = <0x01c69000 0x1000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi1_pins>;
+		interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_SPI1>, <&ccu CLK_SPI1>;
+		resets = <&ccu RST_BUS_SPI1>;
+		clock-names = "ahb", "mod";
+		/*dmas = <&dma 24>, <&dma 24>;
+		dma-names = "rx", "tx";*/
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ksz8794@0 {
+			compatible = "micrel,ksz8794";
+			spi-max-frequency = <1000000>;
+			reg = <0>;
+			reset-gpios = <&pio 7 11 GPIO_ACTIVE_LOW>;			
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					label = "eth2";
+				};
+				port@1 {
+					reg = <1>;
+					label = "eth1";
+				};
+				port@2 {
+					reg = <2>;
+					label = "eth0";
+				};
+				port@3 {
+					reg = <3>;
+					label = "cpu";
+					ethernet = <&emacsw>;
+                    fixed-link {
+						speed = <1000>;
+						full-duplex;
+					};
+				};
+			};
+		}; /* end ksz8794 */
+	}; /* end spi1 */
+	/* We sequence the wifi chip reset to enable probing */
+	wifi_pwrseq: wifi_pwrseq {
+		compatible = "mmc-pwrseq-wilc";
+		reset-gpios = <&r_pio 0 2 GPIO_ACTIVE_LOW>, <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
+	};
+	wdt0: watchdog@1c20ca0 {
+		compatible = "allwinner,sun50i-a64-wdt", "allwinner,sun6i-a31-wdt";
+		reg = <0x01c20ca0 0x20>;
+		interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+	};	
+	thermal-zones {
+		cpu-thermal {
+			/* milliseconds */
+			polling-delay-passive = <250>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths>;
+	
+			trips {
+				cpu_warm: cpu_warm {
+					temperature = <15000>;
+					hysteresis = <2000>;
+					type = "active";
+				};
+	
+				cpu_hot: cpu_hot {
+					temperature = <48000>;
+					hysteresis = <2000>;
+					type = "active";
+				};
+	
+				cpu_very_hot: cpu_very_hot {
+					temperature = <70000>;
+					hysteresis = <2000>;
+					type = "active";
+				};
+	
+				cpu_crit: cpu_crit {
+					temperature = <98000>;
+					hysteresis = <2000>;
+					type = "critical";
+				};
+			};
+	
+			cooling-maps {
+				cpu_warm_limit_cpu {
+					trip = <&cpu_warm>;
+					cooling-device = <&max6639 0 1>;
+				};
+	
+				cpu_hot_limit_cpu {
+					trip = <&cpu_hot>;
+					cooling-device = <&max6639 1 2>;
+				};
+	
+				cpu_very_hot_limit_cpu {
+					trip = <&cpu_very_hot>;
+					cooling-device = <&max6639 2 3>;
+				};
+			};
+		};
+	};
+};
+
+/* Hog required GPIOs, e.g. enable USB power */
+&pio {
+	pullup: pullup {
+		pins = "PC7", "PC4", "PB3";
+		bias-pull-up;
+	};
+	i2c0_pins: i2c0_pins {
+		pins = "PH0", "PH1";
+		function = "i2c0";
+		bias-pull-up;
+	};
+	spi1_pins: spi1_pins {
+		pins = "PD0", "PD1", "PD2", "PD3";
+		function = "spi1";
+	};
+	spi0_pins: spi0 {
+		pins = "PC0", "PC1", "PC2", "PC3";
+		function = "spi0";
+	};
+};
+
+&r_pio {
+	input-debounce = <1>; /* 1us */
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+	usb2514b@2c {
+		compatible = "microchip,usb2514b";
+		reg = <0x2c>;
+		reset-gpios = <&pio 7 10 GPIO_ACTIVE_LOW>;
+	};
+	max6639: max6639@2e {
+		compatible = "maxim,max6639";
+		reg = <0x2e>;
+		ot-gpios = <&pio 1 3 GPIO_ACTIVE_LOW>; /* ~overtemp input */
+		thermal-zone = "cpu-thermal"; /* so we can send it events */
+		#cooling-cells = <2>;
+	};
+	eeprom@50 {
+		compatible = "atmel,24c02";
+		reg = <0x50>;
+	};
+};
+
+&ac_power_supply {
+	status = "okay";
+};
+
+&battery_power_supply {
+	status = "okay";
+};
+
+&codec {
+	status = "okay";
+};
+
+&codec_analog {
+	status = "okay";
+};
+
+&dai {
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ehci1 {
+	status = "okay";
+};
+
+/* Single 100BASE-T via KSZ8081, disabled unless U-boot enables */
+&emac {
+	compatible = "allwinner,sun50i-a64-emac", "fsn,wand2-1-mac";
+	pinctrl-names = "default";
+	pinctrl-0 = <&rmii_pins>;
+	phy-mode = "rmii";
+	phy-handle = <&ext_rmii_phy>;
+	status = "disabled"; /* u-boot will enable if detected */
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+		ext_rmii_phy: ethernet-phy@0 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <0>;
+		};
+	};
+};
+
+&hdmi {
+	hvcc-supply = <&reg_dldo1>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
+&mixer1 {
+	status = "okay";
+};
+
+&mmc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc2_pins>;
+	vmmc-supply = <&reg_vcc3v3>;
+	vqmmc-supply = <&reg_dcdc1>;
+	bus-width = <4>;
+	cap-mmc-hw-reset;
+	status = "okay";
+};
+
+&reg_eldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vdd-1v8-wifi";
+};
+
+&mmc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc1_pins>;
+	vmmc-supply = <&reg_vcc3v3>;
+	/*vqmmc-supply = <&reg_eldo1>;*/
+	mmc-pwrseq = <&wifi_pwrseq>;
+	bus-width = <4>;
+	cap-mmc-hw-reset;
+	/*non-removable;*/
+	broken-cd;
+	max-frequency = <40000000>;
+	status = "okay";
+	/* wilc1000 is powered by DLDO4 @ 3.3V and ELDO1/3 @ 1.8V - core must rise before/with i/o */
+	wilc_sdio: wilc_sdio@0 {
+	    compatible = "microchip,wilc1000";
+		reg = <0>;
+		status = "okay";
+		bus-width = <4>;
+		gpio_reset = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
+		gpio_chip_en = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
+	    gpio_irq = <&r_pio 0 6 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&reg_dc1sw {
+	/*
+	 * Ethernet PHY needs 30ms to properly power up and some more
+	 * to initialize. 100ms should be plenty of time to finish
+	 * whole process.
+	 */
+	 regulator-always-on;
+	regulator-enable-ramp-delay = <100000>;
+	regulator-name = "vcc-phy";
+};
+
+&reg_dldo1 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-hdmi";
+};
+
+&reg_dldo2 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi";
+};
+
+&reg_dldo4 {
+    regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi-io";
+};
+
+&simplefb_hdmi {
+	vcc-hdmi-supply = <&reg_dldo1>;
+};
+
+&sound {
+	simple-audio-card,aux-devs = <&codec_analog>;
+	simple-audio-card,widgets = "Microphone", "Microphone Jack",
+				    "Headphone", "Headphone Jack";
+	simple-audio-card,routing =
+			"Left DAC", "AIF1 Slot 0 Left",
+			"Right DAC", "AIF1 Slot 0 Right",
+			"Headphone Jack", "HP",
+			"AIF1 Slot 0 Left ADC", "Left ADC",
+			"AIF1 Slot 0 Right ADC", "Right ADC",
+			"MIC2", "Microphone Jack";
+	status = "okay";
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pb_pins>;
+	status = "okay";
+};
+
+/* On Pi-2 connector */
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2_pins>;
+	status = "disabled";
+};
+
+/* On Euler connector */
+&uart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3_pins>;
+	status = "disabled";
+};
+
+/* On Euler connector, RTS/CTS optional */
+&uart4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart4_pins>;
+	status = "disabled";
+};
+
+&usb_otg {
+	dr_mode = "host";
+	status = "okay";
+};
+
+&usbphy {
+	status = "okay";
+};
