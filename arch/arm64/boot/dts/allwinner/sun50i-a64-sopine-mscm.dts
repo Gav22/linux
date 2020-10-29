@@ -305,18 +305,17 @@
 		compatible = "microchip,usb2514b";
 		reg = <0x2c>;
 		reset-gpios = <&pio 7 10 GPIO_ACTIVE_LOW>;
-		};
+	};
 	max6639: max6639@2e {
 		compatible = "maxim,max6639";
 		reg = <0x2e>;
 		ot-gpios = <&pio 1 3 GPIO_ACTIVE_LOW>; /* ~overtemp input */
 		thermal-zone = "cpu-thermal"; /* so we can send it events */
 		#cooling-cells = <2>;
-		};
+	};
 	eeprom@50 {
 		compatible = "atmel,24c02";
 		reg = <0x50>;
-		};
 	};
 };
 
