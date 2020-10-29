@@ -11,7 +11,7 @@
 #include <dt-bindings/pwm/pwm.h>
 #include <dt-bindings/thermal/thermal.h>
 
-/	model = "SoPine with MSCM_v2.x";
+	model = "SoPine with MSCM_v2.x";
 	compatible = "pine64,mscm", "pine64,sopine",
 		     "allwinner,sun50i-a64";
 
