@@ -1,6 +1,6 @@
-/ SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 // Copyright (c) 2017 Icenowy Zheng <icenowy@aosc.xyz>
-// Based on sun50i-a64-pine64.dts, which is:
+// Based on sun50i-a64-sopine-baseboard.dts, which is:
 //   Copyright (c) 2016 ARM Ltd.
 
 /dts-v1/;
@@ -154,7 +154,7 @@
 		pinctrl-0 = <&rgmii_pins>;
 		phy-mode = "rgmii";
 		phy-supply = <&reg_dc1sw>;
-		status = "disabled";
+		status = "disabled"; /* u-boot will enable if detected */
 		fixed-link {
 	    	speed = <1000>;
 	      	full-duplex;
@@ -269,6 +269,32 @@
 			};
 		};
 	};
+};
+
+/* Hog required GPIOs, e.g. enable USB power */
+&pio {
+	pullup: pullup {
+		pins = "PC7", "PC4", "PB3";
+		bias-pull-up;
+	};
+	i2c0_pins: i2c0_pins {
+		pins = "PH0", "PH1";
+		function = "i2c0";
+		bias-pull-up;
+	};
+	spi1_pins: spi1_pins {
+		pins = "PD0", "PD1", "PD2", "PD3";
+		function = "spi1";
+	};
+	spi0_pins: spi0 {
+		pins = "PC0", "PC1", "PC2", "PC3";
+		function = "spi0";
+	};
+};
+
+&r_pio {
+	input-debounce = <1>; /* 1us */
+};
 
 &i2c0 {
 	pinctrl-names = "default";
@@ -331,7 +357,7 @@
 	pinctrl-0 = <&rmii_pins>;
 	phy-mode = "rmii";
 	phy-handle = <&ext_rmii_phy>;
-	status = "disabled";
+	status = "disabled"; /* u-boot will enable if detected */
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
