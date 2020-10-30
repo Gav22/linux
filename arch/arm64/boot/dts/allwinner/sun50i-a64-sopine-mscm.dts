@@ -5,7 +5,7 @@
 
 /dts-v1/;
 
-#include "sun50i-a64-sopine.dtsi"
+#include "sun50i-a64-sopine-mscm.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pwm/pwm.h>
@@ -88,7 +88,8 @@
 		
 	};
 	spi0: spi@1c68000 {
-		compatible = "allwinner,sun6i-a31-spi";
+		//compatible = "allwinner,sun6i-a31-spi";
+		compatible = "allwinner,sun8i-h3-spi";
 		reg = <0x01c68000 0x1000>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spi0_pins>;
@@ -99,6 +100,7 @@
 		/*dmas = <&dma 23>, <&dma 23>;
 		dma-names = "rx", "tx";*/
 		status = "okay";
+		num-cs = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		flash: w25q128@0 {
@@ -163,7 +165,8 @@
 	};
 	
 	spi1: spi@01c69000 {
-		compatible = "allwinner,sun6i-a31-spi";
+		//compatible = "allwinner,sun6i-a31-spi";
+		compatible = "allwinner,sun8i-h3-spi";
 		reg = <0x01c69000 0x1000>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spi1_pins>;
@@ -174,6 +177,7 @@
 		/*dmas = <&dma 24>, <&dma 24>;
 		dma-names = "rx", "tx";*/
 		status = "okay";
+		num-cs = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		ksz8794@0 {
@@ -209,66 +213,11 @@
 			};
 		}; /* end ksz8794 */
 	}; /* end spi1 */
+	
 	/* We sequence the wifi chip reset to enable probing */
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-wilc";
 		reset-gpios = <&r_pio 0 2 GPIO_ACTIVE_LOW>, <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
-	};
-	wdt0: watchdog@1c20ca0 {
-		compatible = "allwinner,sun50i-a64-wdt", "allwinner,sun6i-a31-wdt";
-		reg = <0x01c20ca0 0x20>;
-		interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
-	};	
-	thermal-zones {
-		cpu-thermal {
-			/* milliseconds */
-			polling-delay-passive = <250>;
-			polling-delay = <1000>;
-			thermal-sensors = <&ths>;
-	
-			trips {
-				cpu_warm: cpu_warm {
-					temperature = <15000>;
-					hysteresis = <2000>;
-					type = "active";
-				};
-	
-				cpu_hot: cpu_hot {
-					temperature = <48000>;
-					hysteresis = <2000>;
-					type = "active";
-				};
-	
-				cpu_very_hot: cpu_very_hot {
-					temperature = <70000>;
-					hysteresis = <2000>;
-					type = "active";
-				};
-	
-				cpu_crit: cpu_crit {
-					temperature = <98000>;
-					hysteresis = <2000>;
-					type = "critical";
-				};
-			};
-	
-			cooling-maps {
-				cpu_warm_limit_cpu {
-					trip = <&cpu_warm>;
-					cooling-device = <&max6639 0 1>;
-				};
-	
-				cpu_hot_limit_cpu {
-					trip = <&cpu_hot>;
-					cooling-device = <&max6639 1 2>;
-				};
-	
-				cpu_very_hot_limit_cpu {
-					trip = <&cpu_very_hot>;
-					cooling-device = <&max6639 2 3>;
-				};
-			};
-		};
 	};
 };
 
@@ -277,19 +226,6 @@
 	pullup: pullup {
 		pins = "PC7", "PC4", "PB3";
 		bias-pull-up;
-	};
-	i2c0_pins: i2c0_pins {
-		pins = "PH0", "PH1";
-		function = "i2c0";
-		bias-pull-up;
-	};
-	spi1_pins: spi1_pins {
-		pins = "PD0", "PD1", "PD2", "PD3";
-		function = "spi1";
-	};
-	spi0_pins: spi0 {
-		pins = "PC0", "PC1", "PC2", "PC3";
-		function = "spi0";
 	};
 };
 
@@ -317,6 +253,18 @@
 		compatible = "atmel,24c02";
 		reg = <0x50>;
 	};
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+	status = "okay";
+};
+	
+&i2c2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2_pins>;
+	status = "okay";
 };
 
 &ac_power_supply {
