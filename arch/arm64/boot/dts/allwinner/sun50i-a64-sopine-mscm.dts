@@ -157,7 +157,7 @@
 		pinctrl-0 = <&rgmii_pins>;
 		phy-mode = "rgmii";
 		phy-supply = <&reg_dc1sw>;
-		status = "disabled"; /* u-boot will enable if detected */
+		status = "okay"; /* u-boot will enable if detected */
 		fixed-link {
 	    	speed = <1000>;
 	      	full-duplex;
