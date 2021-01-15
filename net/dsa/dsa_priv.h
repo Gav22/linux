@@ -194,6 +194,11 @@ static inline struct dsa_port *dsa_slave_to_port(const struct net_device *dev)
 	return p->dp;
 }
 
+static inline struct dsa_port *dsa_get_cpu_port(struct dsa_switch_tree *dst)
+{
+	return dst->cpu_dp;
+}
+
 static inline struct net_device *
 dsa_slave_to_master(const struct net_device *dev)
 {
