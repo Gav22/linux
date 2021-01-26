@@ -13,6 +13,11 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <net/dsa.h>
+#include <linux/if_bridge.h>
+#include <linux/netdevice.h>
+#include <linux/notifier.h>
+#include <linux/if_vlan.h>
+#include <net/switchdev.h>
 #include "dsa_priv.h"
 
 /* For Ingress (Host -> KSZ), 1 bytes is added before FCS.
