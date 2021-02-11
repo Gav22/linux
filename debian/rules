@@ -7,8 +7,8 @@
 -include /usr/share/dpkg/pkg-info.mk
 
 # Some variables and settings used throughout
-localversion=-1-wanderer
-dtb=allwinner/sun50i-a64-sopine-wanderer2.dtb
+localversion=-1-pinea64
+dtb=allwinner/sun50i-a64-sopine-baseboard.dtb
 version=$(patsubst linux-%,%,$(DEB_SOURCE))
 packageversion=$(DEB_VERSION)
 sourcename=$(DEB_SOURCE)

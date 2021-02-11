@@ -1,18 +1,18 @@
-Source: linux-4.14.14-1-wanderer
+Source: linux-4.14.14-1-pinea64
 Section: kernel
 Priority: optional
 Maintainer: Michael Walton <mike@farsouthnet.com>
 Build-Depends: bc, kmod, cpio, debhelper
 Homepage: http://www.kernel.org/
 
-Package: linux-image-4.14.14-1-wanderer
+Package: linux-image-4.14.14-1-pinea64
 Architecture: any
 Provides: linux-image
-Description: Linux kernel, version ${binary:Version} on ${kernel:debarch} (FSN Wanderer 2)
+Description: Linux kernel, version ${binary:Version} on ${kernel:debarch} (Wanderbox micro Pine A64)
  This package contains the Linux kernel, modules and corresponding other
- files, version: ${binary:Version}, for Far South Networks Wanderer 2
+ files, version: ${binary:Version}, for Far South Networks Pine A64 LTS
 
-Package: linux-headers-4.14.14-1-wanderer
+Package: linux-headers-4.14.14-1-pinea64
 Architecture: any
 Description: Linux kernel headers for ${source:Version} on ${kernel:debarch}
  This package provides kernel header files for ${source:Version} on ${kernel:debarch}
