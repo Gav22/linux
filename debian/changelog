@@ -1,8 +1,8 @@
-linux-4.14.14-1-pinea64 (4.14.14-1.20) buster; urgency=medium
+linux-4.14.14-1-pinea64 (4.14.14-1.21) buster; urgency=medium
 
-  * Target kernel for pineA64 LTS
+  * Build for pine A64 lts
 
- -- Gavin Delcie <gavin@farsouthnet.com>  Thu, 04 Feb 2021 23:27:11 +0200
+ -- Gavin Delcie <gavin@farsouthnet.com>  Fri, 29 Jan 2021 16:56:23 +0200
 
 linux-4.14.14-1-wanderer (4.14.14-1.19) xenial; urgency=medium
 
