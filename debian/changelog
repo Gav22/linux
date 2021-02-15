@@ -1,6 +1,7 @@
-linux-4.14.14-1-pinea64 (4.14.14-1.21) buster; urgency=medium
+linux-4.14.14-1-pinea64 (4.14.14-1.20) buster; urgency=medium
 
   * Build for pine A64 lts
+  * Add rtl8723 and rtl8124 support
 
  -- Gavin Delcie <gavin@farsouthnet.com>  Fri, 29 Jan 2021 16:56:23 +0200
 
