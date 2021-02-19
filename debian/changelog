@@ -1,3 +1,9 @@
+linux-4.14.14-1-pinea64 (4.14.14-1.23) buster; urgency=medium
+
+  * Add detection for spi flash to dtb
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Mon, 19 Feb 2021 14:39:23 +0200
+
 linux-4.14.14-1-pinea64 (4.14.14-1.22) buster; urgency=medium
 
   * Build for pine A64 lts

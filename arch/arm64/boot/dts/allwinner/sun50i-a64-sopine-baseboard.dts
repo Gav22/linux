@@ -70,6 +70,56 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 	};
+	spi0: spi@1c68000 {
+		compatible = "allwinner,sun6i-a31-spi";
+		reg = <0x01c68000 0x1000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spi0_pins>;
+		interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_SPI0>, <&ccu CLK_SPI0>;
+		resets = <&ccu RST_BUS_SPI0>;
+		clock-names = "ahb", "mod";
+		/*dmas = <&dma 23>, <&dma 23>;
+		dma-names = "rx", "tx";*/
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		flash: w25q128@0 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "winbond,w25q128", "jedec,spi-nor";
+			spi-max-frequency = <15000000>;
+			reg = <0>;
+
+			partition@00000 {
+				label = "U-boot";
+				reg = <0x00000 0xde000>;
+				read-only;
+			};
+	
+			partition@de000 {
+				label = "ROM";
+				reg = <0xde000 0x2000>;
+				read-only;
+			};
+	
+			partition@e0000 {
+				label = "U-boot-env";
+				reg = <0xe0000 0x10000>;
+			};
+	
+			partition@f0000 {
+				label = "env2";
+				reg = <0xe0000 0x10000>;
+			};
+
+			partition@100000 {
+				label = "Unused1";
+				reg = <0x100000 0x100000>;
+			};
+
+		};
+	};
 	wifi_pwrseq: wifi_pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; 
