@@ -123,6 +123,7 @@ int swphy_read_reg(int reg, const struct fixed_phy_status *state)
 	int speed_index, duplex_index;
 	u16 bmsr = BMSR_ANEGCAPABLE;
 	u16 estat = 0;
+	u16 bmcr = 0;
 	u16 lpagb = 0;
 	u16 lpa = 0;
 
