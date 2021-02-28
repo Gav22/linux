@@ -387,7 +387,6 @@ static inline u32 dsa_user_ports(struct dsa_switch *ds)
 
 /* Return the local port used to reach an arbitrary switch device */
 static inline unsigned int dsa_routing_port(struct dsa_switch *ds, int device)
-static inline u8 dsa_upstream_port(struct dsa_switch *ds)
 {
 	struct dsa_switch_tree *dst = ds->dst;
 	struct dsa_link *dl;
