@@ -1,3 +1,9 @@
+linux-4.14.14-1-wanderer (4.14.14-1.20) xenial; urgency=medium
+
+  * Add SPI flash support for adesto 16MBit and winbond devices
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Tue, 24 Feb 2021 23:36:18 +0200
+ 
 linux-4.14.14-1-wanderer (4.14.14-1.19) xenial; urgency=medium
 
   * KSZ8794 EMC tweaks
