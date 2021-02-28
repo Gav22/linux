@@ -643,8 +643,7 @@ static int ks8995_enable_port(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void ks8995_disable_port(struct dsa_switch *ds, int port,
-			     struct phy_device *phy)
+static void ks8995_disable_port(struct dsa_switch *ds, int port)
 {
 	struct ks8995_switch *ks = ds->priv;
 
