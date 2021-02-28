@@ -1,3 +1,9 @@
+linux-4.14.14-1-pinea64 (4.14.14-1.24) xenial; urgency=medium
+
+  * Add SPI flash support for adesto 16MBit and winbond devices
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Tue, 23 Feb 2021 11:26:18 +0200
+
 linux-4.14.14-1-pinea64 (4.14.14-1.23) buster; urgency=medium
 
   * Add detection for spi flash to dtb
