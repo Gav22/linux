@@ -12,9 +12,10 @@
 #include <linux/etherdevice.h>
 #include <linux/list.h>
 #include <linux/slab.h>
-#include <net/dsa-ksz.h>
+//#include <net/dsa.h>
+#include <linux/ksz/dsa.h>
 #include <linux/if_bridge.h>
-#include <linux/netdevice-ksz.h>
+#include <linux/ksz/netdevice.h>
 #include <linux/notifier.h>
 #include <linux/if_vlan.h>
 #include <net/switchdev.h>

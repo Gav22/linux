@@ -13,19 +13,20 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#include <linux/ksz/types.h>
+#include <linux/ksz/kernel.h>
+#include <linux/ksz/module.h>
 #include <linux/delay.h>
-#include <linux/device-ksz.h>
+#include <linux/device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
 #include <linux/mii.h>
 
 #include <linux/spi/spi.h>
-#include <linux/netdevice-ksz.h>
-#include <net/dsa-ksz.h>
+#include <linux/ksz/netdevice.h>
+//#include <net/dsa.h>
+#include <linux/ksz/dsa.h>
 
 #define DRV_VERSION		"0.1.3"
 #define DRV_DESC		"Micrel KS8995/KSZ8794 Ethernet switch SPI driver"
