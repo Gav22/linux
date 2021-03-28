@@ -708,12 +708,12 @@ static int ks8995_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	// Allocate a 4-port switch
-	ks->ds = dsa_switch_alloc(&spi->dev, 4);
-	if (!ks->ds) {
-		return -ENOMEM;
-	}
-	ks->ds->priv = ks;
-	ks->ds->ops = &ks8995_switch_ops;
+//	ks->ds = dsa_switch_alloc(&spi->dev, 4);
+//	if (!ks->ds) {
+//		return -ENOMEM;
+//	}
+//	ks->ds->priv = ks;
+//	ks->ds->ops = &ks8995_switch_ops;
 
 	mutex_init(&ks->lock);
 	ks->spi = spi;
@@ -784,7 +784,7 @@ static int ks8995_probe(struct spi_device *spi)
 	dev_info(&spi->dev, "%s device found, Chip ID:%x, Revision:%x\n",
 		 ks->chip->name, ks->chip->chip_id, ks->revision_id);
 
-	err = dsa_register_switch(ks->ds);
+//	err = dsa_register_switch(ks->ds);
 	if (err != 0) {
 		// This can return -517 EPROBE_DEFER, in which case we need to clean up cos we will be called later
 		if (err == -EPROBE_DEFER) {
@@ -839,7 +839,7 @@ static int ks8995_remove(struct spi_device *spi)
 {
 	struct ks8995_switch *ks = spi_get_drvdata(spi);
 
-	dsa_unregister_switch(ks->ds);
+//	dsa_unregister_switch(ks->ds);
 
 	sysfs_remove_bin_file(&spi->dev.kobj, &ks->regs_attr);
 
