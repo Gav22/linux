@@ -126,26 +126,7 @@ struct dsa_switch_tree {
 
 	/* List of switch ports */
 	struct list_head ports;
-	/* Copy of tag_ops->rcv for faster access in hot path */
-	struct sk_buff *	(*rcv)(struct sk_buff *skb,
-				       struct net_device *dev,
-				       struct packet_type *pt);
 
-	/*
-	 * The switch port to which the CPU is attached.
-	 */
-	struct dsa_port		*cpu_dp;
-
-	/*
-	 * Data for the individual switch chips.
-	 */
-	struct dsa_switch	*ds[DSA_MAX_SWITCHES];
-	/*
-	 * Tagging protocol operations for adding and removing an
-	 * encapsulation tag.
-	 */
-	const struct dsa_device_ops *tag_ops;
-	
 	/* List of DSA links composing the routing table */
 	struct list_head rtable;
 };
@@ -209,7 +190,6 @@ struct dsa_port {
 	unsigned int		index;
 	const char		*name;
 	struct dsa_port		*cpu_dp;
-	struct net_device	*netdev;
 	const char		*mac;
 	struct device_node	*dn;
 	unsigned int		ageing_time;
@@ -231,7 +211,6 @@ struct dsa_port {
 	/*
 	 * Original copy of the master netdev ethtool_ops
 	 */
-	struct ethtool_ops	ethtool_ops;
 	const struct ethtool_ops *orig_ethtool_ops;
 
 	/*
@@ -284,18 +263,8 @@ struct dsa_switch {
 	const struct dsa_switch_ops	*ops;
 
 	/*
-	 * An array of which element [a] indicates which port on this
-	 * switch should be used to send packets to that are destined
-	 * for switch a. Can be NULL if there is only one switch chip.
-	 */
-	s8		rtable[DSA_MAX_SWITCHES];
-
-	/*
 	 * Slave mii_bus and devices for the individual ports.
 	 */
-	u32			dsa_port_mask;
-	u32			cpu_port_mask;
-	u32			enabled_port_mask;
 	u32			phys_mii_mask;
 	struct mii_bus		*slave_mii_bus;
 
@@ -338,7 +307,6 @@ struct dsa_switch {
 	bool			mtu_enforcement_ingress;
 
 	size_t num_ports;
-	struct dsa_port ports[];
 };
 
 static inline struct dsa_port *dsa_to_port(struct dsa_switch *ds, int p)
@@ -387,7 +355,6 @@ static inline u32 dsa_user_ports(struct dsa_switch *ds)
 
 /* Return the local port used to reach an arbitrary switch device */
 static inline unsigned int dsa_routing_port(struct dsa_switch *ds, int device)
-static inline u8 dsa_upstream_port(struct dsa_switch *ds)
 {
 	struct dsa_switch_tree *dst = ds->dst;
 	struct dsa_link *dl;
@@ -434,13 +401,6 @@ static inline bool dsa_port_is_vlan_filtering(const struct dsa_port *dp)
 typedef int dsa_fdb_dump_cb_t(const unsigned char *addr, u16 vid,
 			      bool is_static, void *data);
 struct dsa_switch_ops {
-	/*
-	 * Legacy probing.
-	 */
-	const char	*(*probe)(struct device *dsa_dev,
-				  struct device *host_dev, int sw_addr,
-				  void **priv);
-				  
 	enum dsa_tag_protocol (*get_tag_protocol)(struct dsa_switch *ds,
 						  int port,
 						  enum dsa_tag_protocol mprot);
@@ -523,8 +483,7 @@ struct dsa_switch_ops {
 	 */
 	int	(*port_enable)(struct dsa_switch *ds, int port,
 			       struct phy_device *phy);
-	void	(*port_disable)(struct dsa_switch *ds, int port,
-				struct phy_device *phy);
+	void	(*port_disable)(struct dsa_switch *ds, int port);
 
 	/*
 	 * Port's MAC EEE settings
@@ -699,11 +658,6 @@ struct dsa_switch_driver {
 	const struct dsa_switch_ops *ops;
 };
 
-/* Legacy driver registration */
-void register_switch_driver(struct dsa_switch_driver *type);
-void unregister_switch_driver(struct dsa_switch_driver *type);
-struct mii_bus *dsa_host_dev_to_mii_bus(struct device *dev);
-
 struct net_device *dsa_dev_to_net_device(struct device *dev);
 
 /* Keep inline for faster access in hot path */
@@ -724,7 +678,6 @@ static inline bool dsa_can_decode(const struct sk_buff *skb,
 	return false;
 }
 
-struct dsa_switch *dsa_switch_alloc(struct device *dev, size_t n);
 void dsa_unregister_switch(struct dsa_switch *ds);
 int dsa_register_switch(struct dsa_switch *ds);
 struct dsa_switch *dsa_switch_find(int tree_index, int sw_index);
