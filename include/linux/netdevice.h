@@ -52,7 +52,6 @@
 struct netpoll_info;
 struct device;
 struct phy_device;
-struct dsa_switch_tree;
 struct dsa_port;
 struct ip_tunnel_parm;
 struct macsec_context;
@@ -1975,7 +1974,6 @@ struct net_device {
 #endif
 #if IS_ENABLED(CONFIG_NET_DSA)
 	struct dsa_port		*dsa_ptr;
-	struct dsa_switch_tree	*dsa_ptr;
 #endif
 #if IS_ENABLED(CONFIG_TIPC)
 	struct tipc_bearer __rcu *tipc_ptr;
