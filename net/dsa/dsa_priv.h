@@ -99,9 +99,6 @@ void dsa_tag_driver_put(const struct dsa_device_ops *ops);
 bool dsa_schedule_work(struct work_struct *work);
 const char *dsa_tag_protocol_to_str(const struct dsa_device_ops *ops);
 
-/* legacy.c */
-int dsa_legacy_register(void);
-void dsa_legacy_unregister(void);
 int dsa_legacy_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 		       struct net_device *dev,
 		       const unsigned char *addr, u16 vid,
