@@ -84,16 +84,6 @@ struct dsa_slave_priv {
 	/* DSA port data, such as switch, port index, etc. */
 	struct dsa_port		*dp;
 
-	/*
-	 * The phylib phy_device pointer for the PHY connected
-	 * to this port.
-	 */
-	struct phy_device	*phy;
-	phy_interface_t		phy_interface;
-	int			old_link;
-	int			old_pause;
-	int			old_duplex;
-
 #ifdef CONFIG_NET_POLL_CONTROLLER
 	struct netpoll		*netpoll;
 #endif
@@ -186,7 +176,6 @@ extern const struct phylink_mac_ops dsa_port_phylink_mac_ops;
 /* slave.c */
 extern const struct dsa_device_ops notag_netdev_ops;
 void dsa_slave_mii_bus_init(struct dsa_switch *ds);
-void dsa_cpu_port_ethtool_init(struct ethtool_ops *ops);
 int dsa_slave_create(struct dsa_port *dp);
 void dsa_slave_destroy(struct net_device *slave_dev);
 bool dsa_slave_dev_check(const struct net_device *dev);
@@ -216,10 +205,6 @@ dsa_slave_to_master(const struct net_device *dev)
 	return dp->cpu_dp->master;
 }
 
-static inline struct dsa_port *dsa_get_cpu_port(struct dsa_switch_tree *dst)
-{
-	return dst->cpu_dp;
-}
 /* switch.c */
 int dsa_switch_register_notifier(struct dsa_switch *ds);
 void dsa_switch_unregister_notifier(struct dsa_switch *ds);
