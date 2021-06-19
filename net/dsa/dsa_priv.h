@@ -181,12 +181,6 @@ int dsa_slave_resume(struct net_device *slave_dev);
 int dsa_slave_register_notifier(void);
 void dsa_slave_unregister_notifier(void);
 
-/* tag_ksz.c */
-extern const struct dsa_device_ops ksz_netdev_ops;
-
-/* tag_ksz879x.c */
-extern const struct dsa_device_ops ksz879x_netdev_ops;
-
 static inline struct dsa_port *dsa_slave_to_port(const struct net_device *dev)
 {
 	struct dsa_slave_priv *p = netdev_priv(dev);
