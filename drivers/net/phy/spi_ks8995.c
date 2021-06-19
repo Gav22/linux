@@ -506,9 +506,7 @@ static void port_setup(struct ks8995_switch *ks, int port)
 	//ksz_pread16(dev, port, REG_PORT_PHY_INT_ENABLE, &data16);
 }
 
-static enum dsa_tag_protocol ks8995_get_tag_protocol(struct dsa_switch *ds,
-			int port,
-			enum dsa_tag_protocol mp)
+static enum dsa_tag_protocol ks8995_get_tag_protocol(struct dsa_switch *ds)
 {
 	return DSA_TAG_PROTO_KSZ879X;
 }
