@@ -1974,8 +1974,8 @@ struct net_device {
 	struct vlan_info __rcu	*vlan_info;
 #endif
 #if IS_ENABLED(CONFIG_NET_DSA)
-	struct dsa_port		*dsa_ptr;
-	//struct dsa_switch_tree	*dsa_ptr;
+	//struct dsa_port		*dsa_ptr;
+	struct dsa_switch_tree	*dsa_ptr;
 #endif
 #if IS_ENABLED(CONFIG_TIPC)
 	struct tipc_bearer __rcu *tipc_ptr;
