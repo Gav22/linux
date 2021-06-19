@@ -528,7 +528,7 @@ static int ks8995_setup(struct dsa_switch *ds)
 			if (!netif_running(port->netdev)) {
 				rtnl_lock();
 				dev_set_mtu(port->netdev, 1504);
-				dev_open(port->netdev, NULL);
+				dev_open(port->netdev);
 				rtnl_unlock();
 			}
 
