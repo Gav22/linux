@@ -93,7 +93,11 @@ struct dsa_slave_priv {
 };
 
 /* dsa.c */
+int dsa_cpu_dsa_setup(struct dsa_port *port);
+void dsa_cpu_dsa_destroy(struct dsa_port *dport);
 const struct dsa_device_ops *dsa_tag_driver_get(int tag_protocol);
+int dsa_cpu_port_ethtool_setup(struct dsa_port *cpu_dp);
+void dsa_cpu_port_ethtool_restore(struct dsa_port *cpu_dp);
 void dsa_tag_driver_put(const struct dsa_device_ops *ops);
 
 bool dsa_schedule_work(struct work_struct *work);
@@ -192,6 +196,11 @@ static inline struct dsa_port *dsa_slave_to_port(const struct net_device *dev)
 	struct dsa_slave_priv *p = netdev_priv(dev);
 
 	return p->dp;
+}
+
+static inline struct dsa_port *dsa_get_cpu_port(struct dsa_switch_tree *dst)
+{
+	return dst->cpu_dp;
 }
 
 static inline struct net_device *
